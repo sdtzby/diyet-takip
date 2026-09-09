@@ -230,74 +230,85 @@ export default function App() {
       
       {/* Üst Bar & Dinamik Selamlama */}
       <header className="sticky top-0 z-30 bg-[#FAF7F5]/90 backdrop-blur-md px-5 pt-4 pb-3 border-b border-stone-200/50">
-        <div className="flex justify-between items-center mb-3">
+        {/* Minimalist & Akıcı Üst Bar */}
+      <header className="sticky top-0 z-30 bg-[#FAF7F5]/90 backdrop-blur-md px-5 pt-5 pb-3 border-b border-stone-200/40">
+        {/* Selamlama & Profil Butonları */}
+        <div className="flex justify-between items-start mb-3">
           <div>
-            <span className="text-[11px] font-semibold text-rose-500 uppercase tracking-widest block">
+            <p className="text-[12px] font-medium text-rose-500/90 tracking-wide">
               {greeting.sub}
-            </span>
-            <h1 className="text-lg font-extrabold text-stone-800 tracking-tight">
+            </p>
+            <h1 className="text-xl font-bold text-stone-800 tracking-tight mt-0.5">
               {greeting.title}
             </h1>
           </div>
-          <div className="flex items-center gap-1.5">
+          
+          <div className="flex items-center gap-1 bg-white/70 p-1 rounded-2xl border border-stone-200/50 shadow-xs">
             {isAdmin && (
               <button 
                 onClick={() => setIsAdminOpen(true)} 
-                className="p-2 bg-white rounded-xl text-stone-600 hover:text-stone-900 shadow-xs border border-stone-200/60 active:scale-95 transition-all"
+                className="w-7 h-7 rounded-xl text-stone-400 hover:text-stone-800 hover:bg-stone-100 flex items-center justify-center transition-all"
                 title="Yönetici Paneli"
               >
-                <Settings size={17} />
+                <Settings size={15} />
               </button>
             )}
             <button 
               onClick={() => signOut(auth)} 
-              className="p-2 bg-white rounded-xl text-stone-400 hover:text-rose-600 shadow-xs border border-stone-200/60 active:scale-95 transition-all"
+              className="w-7 h-7 rounded-xl text-stone-400 hover:text-rose-600 hover:bg-stone-100 flex items-center justify-center transition-all"
               title="Çıkış"
             >
-              <LogOut size={17} />
+              <LogOut size={15} />
             </button>
           </div>
         </div>
 
-        {/* Tarih Değiştirici */}
-        <div className="flex items-center justify-between bg-white rounded-2xl p-1.5 shadow-xs border border-stone-200/60">
-          <button 
-            onClick={() => setCurrentDate(subDays(currentDate, 1))} 
-            className="p-2 text-stone-500 hover:text-stone-900 hover:bg-stone-50 rounded-xl transition-all"
-          >
-            <ChevronLeft size={17} />
-          </button>
-          <span className="text-xs font-bold text-stone-700 capitalize">
-            {format(currentDate, "d MMMM yyyy, EEEE", { locale: tr })}
-          </span>
-          <button 
-            onClick={() => setCurrentDate(addDays(currentDate, 1))} 
-            className="p-2 text-stone-500 hover:text-stone-900 hover:bg-stone-50 rounded-xl transition-all"
-          >
-            <ChevronRight size={17} />
-          </button>
-        </div>
+        {/* Tarih & 4 Segmentli Hikaye Tarzı İlerleme Çubuğu */}
+        <div className="bg-white/90 border border-stone-200/70 rounded-2xl p-2.5 px-3.5 shadow-xs space-y-2">
+          <div className="flex items-center justify-between">
+            <button 
+              onClick={() => setCurrentDate(subDays(currentDate, 1))} 
+              className="w-6 h-6 flex items-center justify-center rounded-lg text-stone-400 hover:text-stone-800 hover:bg-stone-100 transition-colors"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-stone-700 capitalize">
+                {format(currentDate, "d MMMM yyyy, EEEE", { locale: tr })}
+              </span>
+              <span className="text-[11px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.2 rounded-md">
+                {completedMeals}/4
+              </span>
+            </div>
 
-        {/* İlerleme Çubuğu */}
-        <div className="mt-3 bg-rose-50/80 border border-rose-100/80 rounded-2xl p-2.5 px-3 flex items-center justify-between gap-3">
-          <div className="flex-1">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-[11px] font-semibold text-stone-600">Öğün Takibi</span>
-              <span className="text-[11px] font-bold text-rose-600">{completedMeals} / {totalMeals}</span>
-            </div>
-            <div className="w-full h-1.5 bg-rose-200/50 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-rose-400 to-rose-600 rounded-full transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
+            <button 
+              onClick={() => setCurrentDate(addDays(currentDate, 1))} 
+              className="w-6 h-6 flex items-center justify-center rounded-lg text-stone-400 hover:text-stone-800 hover:bg-stone-100 transition-colors"
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
-          {progressPercent === 100 && (
-            <span className="bg-emerald-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full animate-pulse shrink-0">
-              GÜN TAMAM! ✨
-            </span>
-          )}
+
+          {/* 4 Öğün İçin Ayrı Segmentler (Sabah, Öğle, Ara, Akşam) */}
+          <div className="grid grid-cols-4 gap-1.5 pt-0.5">
+            {NAV_ITEMS.map((item) => {
+              const isDone = selections[item.id] !== undefined;
+              return (
+                <div key={item.id} className="group relative">
+                  <div 
+                    className={`h-1.5 rounded-full transition-all duration-500 ${
+                      isDone 
+                        ? "bg-rose-500 shadow-xs shadow-rose-500/30" 
+                        : "bg-stone-100"
+                    }`} 
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
+      </header>
       </header>
 
       {/* Ana İçerik */}
