@@ -8,7 +8,7 @@ import { format, addDays, subDays } from "date-fns";
 import { tr } from "date-fns/locale";
 import { 
   ChevronLeft, ChevronRight, Sparkles, LogOut, 
-  Check, Settings, Camera, X, Sun, Moon, Coffee, BookOpen 
+  Check, Settings, Camera, X, Sun, Moon, Coffee, BookOpen, Ban 
 } from "lucide-react";
 
 const MEAL_ICONS = {
@@ -23,6 +23,21 @@ const NAV_ITEMS = [
   { id: "lunch", label: "Öğle", icon: Sun },
   { id: "snack", label: "Ara", icon: Sparkles },
   { id: "dinner", label: "Akşam", icon: Moon },
+];
+
+const DEFAULT_FORBIDDEN = [
+  {
+    category: "Hamur İşleri ve Unlu Gıdalar",
+    items: ["Beyaz Ekmek", "Lavaş", "Pide", "Börek", "Poğaça", "Simit", "Makarna"],
+  },
+  {
+    category: "Şeker İçeriği Yüksek Besinler",
+    items: ["Bal", "Reçel", "Pekmez", "Çikolata", "Gazlı ve Şekerli İçecekler", "Hazır Meyve Suyu"],
+  },
+  {
+    category: "Kızartmalar ve İşlenmiş Gıdalar",
+    items: ["Patates Kızartması", "Salam", "Sosis", "Sucuk", "Fast Food", "Cips"],
+  },
 ];
 
 const getCurrentMealByHour = () => {
@@ -42,6 +57,7 @@ export default function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [showRules, setShowRules] = useState(false);
+  const [showForbidden, setShowForbidden] = useState(false);
   const [activeMeal, setActiveMeal] = useState(getCurrentMealByHour());
 
   // Karanlık Mod Yönetimi & Kalıcı Hafıza
@@ -321,18 +337,27 @@ export default function App() {
           </div>
         </div>
 
-        {/* Alt Sıra: İpucu & Kurallar Butonu */}
-        <div className="mt-2 flex items-center justify-between">
+        {/* Alt Sıra: İpucu & Yasaklar + Kurallar Butonları */}
+        <div className="mt-2.5 flex items-center justify-between">
           <p className="text-xs text-stone-400 dark:text-stone-500 font-normal truncate mr-2">
             {greeting.sub}
           </p>
-          <button
-            onClick={() => setShowRules(true)}
-            className="shrink-0 flex items-center gap-1 text-[11px] font-semibold text-stone-500 dark:text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-[#231F1E] border border-stone-200/80 dark:border-stone-800 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
-          >
-            <BookOpen size={11} className="text-rose-400" />
-            <span>Kurallar</span>
-          </button>
+          <div className="shrink-0 flex items-center gap-1.5">
+            <button
+              onClick={() => setShowForbidden(true)}
+              className="flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200/70 dark:border-rose-900/60 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
+            >
+              <Ban size={11} className="text-rose-500" />
+              <span>Yasaklar</span>
+            </button>
+            <button
+              onClick={() => setShowRules(true)}
+              className="flex items-center gap-1 text-[11px] font-semibold text-stone-500 dark:text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-[#231F1E] border border-stone-200/80 dark:border-stone-800 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
+            >
+              <BookOpen size={11} className="text-rose-400" />
+              <span>Kurallar</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -442,6 +467,60 @@ export default function App() {
           );
         })}
       </nav>
+
+      {/* Yasaklar Modali */}
+      {showForbidden && (
+        <div 
+          className="fixed inset-0 z-50 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs flex items-center justify-center p-6 animate-in fade-in duration-200"
+          onClick={() => setShowForbidden(false)}
+        >
+          <div 
+            className="bg-white dark:bg-[#231F1E] rounded-3xl p-6 max-w-xs sm:max-w-sm w-full max-h-[80vh] flex flex-col shadow-2xl border border-stone-100 dark:border-stone-800 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center pb-2 border-b border-stone-100 dark:border-stone-800 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center text-rose-500 dark:text-rose-400">
+                  <Ban size={13} />
+                </div>
+                <span className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-200">
+                  Uzak Durulacaklar
+                </span>
+              </div>
+              <button 
+                onClick={() => setShowForbidden(false)} 
+                className="w-7 h-7 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 flex items-center justify-center transition-colors"
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto space-y-3.5 pr-1 text-xs">
+              {(dietConfig.forbidden || DEFAULT_FORBIDDEN).map((group, gIdx) => (
+                <div 
+                  key={gIdx} 
+                  className="bg-stone-50/70 dark:bg-[#1C1817] border border-stone-200/60 dark:border-stone-800/80 rounded-2xl p-3.5 space-y-2"
+                >
+                  <h3 className="font-bold text-rose-600 dark:text-rose-400 text-[11px] uppercase tracking-wide">
+                    {group.category}
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {group.items.map((item, iIdx) => (
+                      <span
+                        key={iIdx}
+                        className="inline-flex items-center gap-1.5 bg-white dark:bg-[#282220] border border-stone-200/80 dark:border-stone-700/70 text-stone-700 dark:text-stone-300 px-2.5 py-1 rounded-xl text-[11px] font-medium shadow-2xs"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Kurallar Modali */}
       {showRules && (
