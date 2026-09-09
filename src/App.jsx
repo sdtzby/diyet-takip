@@ -8,15 +8,29 @@ import { format, addDays, subDays } from "date-fns";
 import { tr } from "date-fns/locale";
 import { 
   ChevronLeft, ChevronRight, Sparkles, LogOut, 
-  Check, Settings, Camera, X, Sun, Moon, Coffee, HeartHandshake
+  Check, Settings, Camera, X, Sun, Moon, Coffee, HeartHandshake 
 } from "lucide-react";
 
-// Öğün ikonları eşleştirmesi
 const MEAL_ICONS = {
   breakfast: Coffee,
   lunch: Sun,
   snack: Sparkles,
   dinner: Moon,
+};
+
+const NAV_ITEMS = [
+  { id: "breakfast", label: "Sabah", icon: Coffee },
+  { id: "lunch", label: "Öğle", icon: Sun },
+  { id: "snack", label: "Ara", icon: Sparkles },
+  { id: "dinner", label: "Akşam", icon: Moon },
+];
+
+const getCurrentMealByHour = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 11) return "breakfast";
+  if (hour >= 11 && hour < 15) return "lunch";
+  if (hour >= 15 && hour < 18) return "snack";
+  return "dinner";
 };
 
 export default function App() {
@@ -27,12 +41,22 @@ export default function App() {
   const [selections, setSelections] = useState({});
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  
+  const [activeMeal, setActiveMeal] = useState(getCurrentMealByHour());
 
+  // Giriş form alanları
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
-  // Saate ve kullanıcıya göre dinamik karşılama
+
+  const dateKey = format(currentDate, "yyyy-MM-dd");
+  const isAdmin = user && user.uid === ADMIN_UID;
+
+  // İlerleme hesabı
+  const totalMeals = dietConfig.meals.length;
+  const completedMeals = Object.keys(selections).filter(k => selections[k] !== undefined).length;
+  const progressPercent = totalMeals > 0 ? Math.round((completedMeals / totalMeals) * 100) : 0;
+
+  // Saate ve kullanıcıya göre dinamik selamlama
   const getGreeting = () => {
     const hour = new Date().getHours();
     const isWife = user?.email?.toLowerCase().includes("cigdem");
@@ -63,14 +87,7 @@ export default function App() {
 
   const greeting = getGreeting();
 
-  const dateKey = format(currentDate, "yyyy-MM-dd");
-  const isAdmin = user && user.uid === ADMIN_UID;
-
-  // Günün ilerleme yüzdesi
-  const totalMeals = dietConfig.meals.length;
-  const completedMeals = Object.keys(selections).filter(k => selections[k] !== undefined).length;
-  const progressPercent = totalMeals > 0 ? Math.round((completedMeals / totalMeals) * 100) : 0;
-
+  // 1. Auth Takibi
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -79,6 +96,7 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  // 2. Diyet Şablonunu Firestore'dan Çek
   useEffect(() => {
     if (!user) return;
     const fetchDietConfig = async () => {
@@ -97,6 +115,7 @@ export default function App() {
     fetchDietConfig();
   }, [user, isAdmin]);
 
+  // 3. Seçili Günün Tercihlerini Çek
   useEffect(() => {
     if (!user) return;
     const fetchLog = async () => {
@@ -111,8 +130,29 @@ export default function App() {
     fetchLog();
   }, [user, dateKey]);
 
+  // 4. Sayfa açıldığında saate uygun öğüne otomatik kaydır
+  useEffect(() => {
+    if (!user) return;
+    const current = getCurrentMealByHour();
+    setActiveMeal(current);
+    const timer = setTimeout(() => {
+      const el = document.getElementById(current);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [user]);
+
+  const scrollToMeal = (mealId) => {
+    setActiveMeal(mealId);
+    const el = document.getElementById(mealId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
   const handleSelect = async (mealId, optionIndex) => {
-    // Aynı seçeneğe tıklanırsa seçimi kaldırabilme esnekliği
     const updated = { ...selections };
     if (updated[mealId] === optionIndex) {
       delete updated[mealId];
@@ -206,20 +246,19 @@ export default function App() {
   }
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] pb-16 flex flex-col font-sans text-stone-800 select-none">
+    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] pb-28 flex flex-col font-sans text-stone-800 select-none">
       
-      {/* Üst Bar & Tarih Gezgini */}
+      {/* Üst Bar & Dinamik Selamlama */}
       <header className="sticky top-0 z-30 bg-[#FAF7F5]/90 backdrop-blur-md px-5 pt-4 pb-3 border-b border-stone-200/50">
         <div className="flex justify-between items-center mb-3">
-          {/* Eski "Beslenme Rehberim / Günün Ritmi" yerine: */}
-<div>
-  <span className="text-[11px] font-semibold text-rose-500 uppercase tracking-widest block">
-    {greeting.sub}
-  </span>
-  <h1 className="text-lg font-extrabold text-stone-800 tracking-tight">
-    {greeting.title}
-  </h1>
-</div>
+          <div>
+            <span className="text-[11px] font-semibold text-rose-500 uppercase tracking-widest block">
+              {greeting.sub}
+            </span>
+            <h1 className="text-lg font-extrabold text-stone-800 tracking-tight">
+              {greeting.title}
+            </h1>
+          </div>
           <div className="flex items-center gap-1.5">
             {isAdmin && (
               <button 
@@ -284,7 +323,7 @@ export default function App() {
       {/* Ana İçerik */}
       <main className="p-4 space-y-4 flex-1">
         
-        {/* Altın Kurallar Kartı */}
+        {/* Hatırlatıcı Kurallar Kartı */}
         <div className="bg-linear-to-br from-amber-50/70 to-orange-50/50 border border-amber-200/60 rounded-3xl p-4 shadow-xs">
           <div className="flex items-center gap-2 text-amber-800 font-bold text-xs uppercase tracking-wider mb-2">
             <div className="p-1 bg-amber-200/50 rounded-lg text-amber-700">
@@ -311,11 +350,11 @@ export default function App() {
           return (
             <section 
               key={meal.id} 
-              className={`bg-white rounded-3xl p-4 border transition-all duration-300 shadow-xs ${
+              id={meal.id}
+              className={`scroll-mt-36 bg-white rounded-3xl p-4 border transition-all duration-300 shadow-xs ${
                 isDone ? "border-rose-200 shadow-rose-950/5" : "border-stone-200/60"
               }`}
             >
-              {/* Öğün Başlığı */}
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-2.5">
                   <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-colors ${
@@ -340,7 +379,7 @@ export default function App() {
                 )}
               </div>
 
-              {/* Seçenek Listesi */}
+              {/* Seçenekler */}
               <div className="space-y-2">
                 {meal.options.map((opt, idx) => {
                   const isSelected = selectedIdx === idx;
@@ -354,7 +393,6 @@ export default function App() {
                           : "bg-[#FAF7F5]/50 border-stone-100 text-stone-600 hover:bg-stone-50"
                       }`}
                     >
-                      {/* Checkbox Dairesi */}
                       <div className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 transition-all ${
                         isSelected 
                           ? "border-rose-500 bg-rose-500 text-white shadow-xs" 
@@ -371,6 +409,41 @@ export default function App() {
           );
         })}
       </main>
+
+      {/* Alt Yüzen Menü (Floating Glass Dock) */}
+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/85 backdrop-blur-lg border border-rose-100/90 shadow-xl shadow-rose-950/10 rounded-3xl p-1.5 flex items-center justify-around z-40">
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeMeal === item.id;
+          const isDone = selections[item.id] !== undefined;
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => scrollToMeal(item.id)}
+              className={`relative flex flex-col items-center justify-center py-2 px-3.5 rounded-2xl transition-all duration-300 active:scale-90 ${
+                isActive 
+                  ? "bg-linear-to-b from-rose-500 to-rose-600 text-white shadow-md shadow-rose-500/25" 
+                  : "text-stone-500 hover:text-stone-800 hover:bg-stone-50"
+              }`}
+            >
+              <div className="relative">
+                <Icon size={17} strokeWidth={isActive ? 2.5 : 2} />
+                {isDone && (
+                  <span className={`absolute -top-1 -right-1.5 w-2 h-2 rounded-full ring-2 ${
+                    isActive ? "bg-emerald-300 ring-rose-600" : "bg-emerald-500 ring-white"
+                  }`} />
+                )}
+              </div>
+              <span className={`text-[10px] tracking-tight mt-1 font-bold ${
+                isActive ? "text-white" : "text-stone-600"
+              }`}>
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* Admin Panel Modal */}
       {isAdminOpen && (
