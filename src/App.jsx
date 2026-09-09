@@ -229,86 +229,79 @@ export default function App() {
     <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] pb-28 flex flex-col font-sans text-stone-800 select-none">
       
       {/* Üst Bar & Dinamik Selamlama */}
-      <header className="sticky top-0 z-30 bg-[#FAF7F5]/90 backdrop-blur-md px-5 pt-4 pb-3 border-b border-stone-200/50">
-        {/* Minimalist & Akıcı Üst Bar */}
-      <header className="sticky top-0 z-30 bg-[#FAF7F5]/90 backdrop-blur-md px-5 pt-5 pb-3 border-b border-stone-200/40">
-        {/* Selamlama & Profil Butonları */}
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <p className="text-[12px] font-medium text-rose-500/90 tracking-wide">
-              {greeting.sub}
-            </p>
-            <h1 className="text-xl font-bold text-stone-800 tracking-tight mt-0.5">
-              {greeting.title}
-            </h1>
-          </div>
-          
-          <div className="flex items-center gap-1 bg-white/70 p-1 rounded-2xl border border-stone-200/50 shadow-xs">
-            {isAdmin && (
-              <button 
-                onClick={() => setIsAdminOpen(true)} 
-                className="w-7 h-7 rounded-xl text-stone-400 hover:text-stone-800 hover:bg-stone-100 flex items-center justify-center transition-all"
-                title="Yönetici Paneli"
-              >
-                <Settings size={15} />
-              </button>
-            )}
+      {/* Minimal & Editöryal Üst Alan */}
+      <header className="px-6 pt-7 pb-4 bg-[#FAF7F5]">
+        {/* Üst Sıra: Tarih Gezgini & Aksiyonlar */}
+        <div className="flex items-center justify-between text-stone-400 mb-4">
+          <div className="flex items-center gap-2">
             <button 
-              onClick={() => signOut(auth)} 
-              className="w-7 h-7 rounded-xl text-stone-400 hover:text-rose-600 hover:bg-stone-100 flex items-center justify-center transition-all"
-              title="Çıkış"
-            >
-              <LogOut size={15} />
-            </button>
-          </div>
-        </div>
-
-        {/* Tarih & 4 Segmentli Hikaye Tarzı İlerleme Çubuğu */}
-        <div className="bg-white/90 border border-stone-200/70 rounded-2xl p-2.5 px-3.5 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <button 
-              onClick={() => setCurrentDate(subDays(currentDate, 1))} 
-              className="w-6 h-6 flex items-center justify-center rounded-lg text-stone-400 hover:text-stone-800 hover:bg-stone-100 transition-colors"
+              onClick={() => setCurrentDate(subDays(currentDate, 1))}
+              className="p-1 -ml-1 hover:text-stone-700 transition-colors"
             >
               <ChevronLeft size={16} />
             </button>
-            
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-stone-700 capitalize">
-                {format(currentDate, "d MMMM yyyy, EEEE", { locale: tr })}
-              </span>
-              <span className="text-[11px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.2 rounded-md">
-                {completedMeals}/4
-              </span>
-            </div>
-
+            <span className="text-xs font-semibold tracking-wide text-stone-600 capitalize">
+              {format(currentDate, "d MMMM, EEEE", { locale: tr })}
+            </span>
             <button 
-              onClick={() => setCurrentDate(addDays(currentDate, 1))} 
-              className="w-6 h-6 flex items-center justify-center rounded-lg text-stone-400 hover:text-stone-800 hover:bg-stone-100 transition-colors"
+              onClick={() => setCurrentDate(addDays(currentDate, 1))}
+              className="p-1 hover:text-stone-700 transition-colors"
             >
               <ChevronRight size={16} />
             </button>
           </div>
 
-          {/* 4 Öğün İçin Ayrı Segmentler (Sabah, Öğle, Ara, Akşam) */}
-          <div className="grid grid-cols-4 gap-1.5 pt-0.5">
-            {NAV_ITEMS.map((item) => {
-              const isDone = selections[item.id] !== undefined;
-              return (
-                <div key={item.id} className="group relative">
-                  <div 
-                    className={`h-1.5 rounded-full transition-all duration-500 ${
-                      isDone 
-                        ? "bg-rose-500 shadow-xs shadow-rose-500/30" 
-                        : "bg-stone-100"
-                    }`} 
-                  />
-                </div>
-              );
-            })}
+          <div className="flex items-center gap-3">
+            {isAdmin && (
+              <button 
+                onClick={() => setIsAdminOpen(true)} 
+                className="hover:text-stone-800 transition-colors"
+                title="Yönetici Paneli"
+              >
+                <Settings size={16} />
+              </button>
+            )}
+            <button 
+              onClick={() => signOut(auth)} 
+              className="hover:text-rose-600 transition-colors"
+              title="Çıkış"
+            >
+              <LogOut size={16} />
+            </button>
           </div>
         </div>
-      </header>
+
+        {/* Orta Sıra: Sade Karşılama & İlerleme Noktaları */}
+        <div className="flex items-baseline justify-between">
+          <h1 className="text-2xl font-light tracking-tight text-stone-800">
+            {greeting.title.split(",")[0]}, <span className="font-semibold text-rose-600">{greeting.title.split(",")[1]}</span>
+          </h1>
+
+          {/* 4 Mikro Gösterge */}
+          <div className="flex items-center gap-1.5" title={`${completedMeals}/4 Öğün Tamamlandı`}>
+            {NAV_ITEMS.map((item) => (
+              <div 
+                key={item.id} 
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  selections[item.id] !== undefined ? "bg-rose-500 scale-110" : "bg-stone-200"
+                }`} 
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Alt Sıra: Tek Satırlık Zarif Kural Çipi */}
+        <div className="mt-3 flex items-center justify-between">
+          <p className="text-xs text-stone-400 font-normal">
+            {greeting.sub}
+          </p>
+          <button
+            onClick={() => setPreviewImage("rules")} // Modal tetikleyici
+            className="text-[11px] font-semibold text-stone-500 hover:text-rose-600 bg-white border border-stone-200/80 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
+          >
+            Kurallar (4)
+          </button>
+        </div>
       </header>
 
       {/* Ana İçerik */}
