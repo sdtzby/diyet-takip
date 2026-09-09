@@ -8,7 +8,7 @@ import { format, addDays, subDays } from "date-fns";
 import { tr } from "date-fns/locale";
 import { 
   ChevronLeft, ChevronRight, Sparkles, LogOut, 
-  Check, Settings, Camera, X, Sun, Moon, Coffee, BookOpen
+  Check, Settings, Camera, X, Sun, Moon, Coffee, BookOpen 
 } from "lucide-react";
 
 const MEAL_ICONS = {
@@ -303,7 +303,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Ana İçerik: Sadece Seçilen Öğün */}
+      {/* Ana İçerik: Sadece Seçilen Tek Öğün */}
       <main className="px-5 pt-2 flex-1">
         {selectedMealData && (
           <section 
