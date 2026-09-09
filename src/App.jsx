@@ -231,7 +231,7 @@ export default function App() {
       {/* Minimal Editöryal Üst Alan */}
       <header className="px-6 pt-7 pb-4 bg-[#FAF7F5]">
         {/* Üst Sıra: Tarih ve Eylemler */}
-        <div className="flex items-center justify-between text-stone-400 mb-4">
+        <div className="flex items-center justify-between text-stone-400 mb-3">
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setCurrentDate(subDays(currentDate, 1))}
@@ -271,12 +271,15 @@ export default function App() {
         </div>
 
         {/* Orta Sıra: Selamlama & 4 Mikro Nokta */}
-        <div className="flex items-baseline justify-between">
-          <h1 className="text-2xl font-light tracking-tight text-stone-800">
-            {greeting.word}, <span className="font-semibold text-rose-500">{greeting.name}</span>
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-lg font-light tracking-tight text-stone-800 truncate">
+            {greeting.word},{" "}
+            <span className="font-semibold text-rose-500 whitespace-nowrap">
+              {greeting.name}
+            </span>
           </h1>
 
-          <div className="flex items-center gap-1.5" title={`${completedMeals}/${totalMeals} Öğün Tamamlandı`}>
+          <div className="flex items-center gap-1.5 shrink-0" title={`${completedMeals}/${totalMeals} Öğün Tamamlandı`}>
             {NAV_ITEMS.map((item) => (
               <div 
                 key={item.id} 
@@ -289,13 +292,13 @@ export default function App() {
         </div>
 
         {/* Alt Sıra: İpucu & Kurallar Butonu */}
-        <div className="mt-2.5 flex items-center justify-between">
-          <p className="text-xs text-stone-400 font-normal">
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-xs text-stone-400 font-normal truncate mr-2">
             {greeting.sub}
           </p>
           <button
             onClick={() => setShowRules(true)}
-            className="flex items-center gap-1 text-[11px] font-semibold text-stone-500 hover:text-rose-600 bg-white border border-stone-200/80 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
+            className="shrink-0 flex items-center gap-1 text-[11px] font-semibold text-stone-500 hover:text-rose-600 bg-white border border-stone-200/80 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
           >
             <BookOpen size={11} className="text-rose-400" />
             <span>Kurallar</span>
