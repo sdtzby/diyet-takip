@@ -44,6 +44,23 @@ export default function App() {
   const [showRules, setShowRules] = useState(false);
   const [activeMeal, setActiveMeal] = useState(getCurrentMealByHour());
 
+  // Karanlık Mod Yönetimi & Kalıcı Hafıza
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved) return saved === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDark]);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
@@ -160,8 +177,8 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAF7F5] flex flex-col items-center justify-center gap-3">
-        <div className="w-9 h-9 border-2 border-rose-200 border-t-rose-500 rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#FAF7F5] dark:bg-[#181514] flex flex-col items-center justify-center gap-3">
+        <div className="w-9 h-9 border-2 border-rose-200 dark:border-rose-900 border-t-rose-500 rounded-full animate-spin" />
         <span className="text-[11px] tracking-widest text-stone-400 uppercase font-medium">Yükleniyor</span>
       </div>
     );
@@ -170,40 +187,40 @@ export default function App() {
   // Giriş Ekranı
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#FAF7F5] flex items-center justify-center p-6">
-        <div className="w-full max-w-sm bg-white p-8 rounded-3xl shadow-sm border border-stone-100">
+      <div className="min-h-screen bg-[#FAF7F5] dark:bg-[#181514] flex items-center justify-center p-6">
+        <div className="w-full max-w-sm bg-white dark:bg-[#231F1E] p-8 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-800">
           <div className="text-center mb-6">
-            <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-rose-500">
+            <div className="w-12 h-12 bg-rose-50 dark:bg-rose-950/40 rounded-2xl flex items-center justify-center mx-auto mb-3 text-rose-500 dark:text-rose-400">
               <Sparkles size={20} />
             </div>
-            <h1 className="text-xl font-bold text-stone-800 tracking-tight">Diyet & Yaşam Ritmi</h1>
-            <p className="text-xs text-stone-400 mt-1">Günün menüsünü takip etmeye başla</p>
+            <h1 className="text-xl font-bold text-stone-800 dark:text-stone-100 tracking-tight">Diyet & Yaşam Ritmi</h1>
+            <p className="text-xs text-stone-400 dark:text-stone-500 mt-1">Günün menüsünü takip etmeye başla</p>
           </div>
 
           {authError && (
-            <div className="text-rose-600 text-xs mb-4 bg-rose-50 p-3 rounded-xl border border-rose-100 text-center">
+            <div className="text-rose-600 dark:text-rose-400 text-xs mb-4 bg-rose-50 dark:bg-rose-950/30 p-3 rounded-xl border border-rose-100 dark:border-rose-900/50 text-center">
               {authError}
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-stone-500 mb-1 ml-1">E-Posta</label>
+              <label className="block text-xs font-semibold text-stone-500 dark:text-stone-400 mb-1 ml-1">E-Posta</label>
               <input
                 type="email"
                 required
-                className="w-full bg-stone-50 border border-stone-200/80 rounded-2xl px-4 py-3 text-xs text-stone-800 focus:outline-hidden focus:border-rose-400 focus:bg-white transition-all"
+                className="w-full bg-stone-50 dark:bg-stone-850 border border-stone-200/80 dark:border-stone-700/80 rounded-2xl px-4 py-3 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400 focus:bg-white dark:focus:bg-[#1c1817] transition-all"
                 value={email}
                 placeholder="ornek@hesap.com"
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-stone-500 mb-1 ml-1">Şifre</label>
+              <label className="block text-xs font-semibold text-stone-500 dark:text-stone-400 mb-1 ml-1">Şifre</label>
               <input
                 type="password"
                 required
-                className="w-full bg-stone-50 border border-stone-200/80 rounded-2xl px-4 py-3 text-xs text-stone-800 focus:outline-hidden focus:border-rose-400 focus:bg-white transition-all"
+                className="w-full bg-stone-50 dark:bg-stone-850 border border-stone-200/80 dark:border-stone-700/80 rounded-2xl px-4 py-3 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400 focus:bg-white dark:focus:bg-[#1c1817] transition-all"
                 value={password}
                 placeholder="••••••••"
                 onChange={(e) => setPassword(e.target.value)}
@@ -226,25 +243,25 @@ export default function App() {
   const isSelectedMealDone = selectedMealData && selections[selectedMealData.id] !== undefined;
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] pb-28 flex flex-col font-sans text-stone-800 select-none">
+    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] pb-28 flex flex-col font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300">
       
       {/* Minimal Editöryal Üst Alan */}
-      <header className="px-6 pt-7 pb-4 bg-[#FAF7F5]">
+      <header className="px-6 pt-7 pb-4 bg-[#FAF7F5] dark:bg-[#181514] transition-colors duration-300">
         {/* Üst Sıra: Tarih ve Eylemler */}
-        <div className="flex items-center justify-between text-stone-400 mb-3">
+        <div className="flex items-center justify-between text-stone-400 dark:text-stone-500 mb-3">
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setCurrentDate(subDays(currentDate, 1))}
-              className="p-1 -ml-1 hover:text-stone-700 transition-colors"
+              className="p-1 -ml-1 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="text-xs font-semibold tracking-wide text-stone-600 capitalize">
+            <span className="text-xs font-semibold tracking-wide text-stone-600 dark:text-stone-300 capitalize">
               {format(currentDate, "d MMMM, EEEE", { locale: tr })}
             </span>
             <button 
               onClick={() => setCurrentDate(addDays(currentDate, 1))}
-              className="p-1 hover:text-stone-700 transition-colors"
+              className="p-1 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
             >
               <ChevronRight size={16} />
             </button>
@@ -254,15 +271,26 @@ export default function App() {
             {isAdmin && (
               <button 
                 onClick={() => setIsAdminOpen(true)} 
-                className="text-stone-400 hover:text-stone-800 transition-colors"
+                className="text-stone-400 dark:text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition-colors"
                 title="Yönetici Paneli"
               >
                 <Settings size={16} />
               </button>
             )}
+
+            {/* Karanlık Mod Değiştirici */}
+            <button 
+              onClick={() => setIsDark(!isDark)} 
+              className="text-stone-400 dark:text-stone-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors p-0.5"
+              title={isDark ? "Aydınlık Moda Geç" : "Karanlık Moda Geç"}
+            >
+              {isDark ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+
+            {/* Çıkış Butonu */}
             <button 
               onClick={() => signOut(auth)} 
-              className="text-stone-400 hover:text-rose-600 transition-colors"
+              className="text-stone-400 dark:text-stone-500 hover:text-rose-600 transition-colors"
               title="Çıkış"
             >
               <LogOut size={16} />
@@ -272,9 +300,9 @@ export default function App() {
 
         {/* Orta Sıra: Selamlama & 4 Mikro Nokta */}
         <div className="flex items-center justify-between gap-2">
-          <h1 className="text-lg font-light tracking-tight text-stone-800 truncate">
+          <h1 className="text-lg font-light tracking-tight text-stone-800 dark:text-stone-100 truncate">
             {greeting.word},{" "}
-            <span className="font-semibold text-rose-500 whitespace-nowrap">
+            <span className="font-semibold text-rose-500 dark:text-rose-400 whitespace-nowrap">
               {greeting.name}
             </span>
           </h1>
@@ -284,7 +312,9 @@ export default function App() {
               <div 
                 key={item.id} 
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  selections[item.id] !== undefined ? "bg-rose-500 scale-110" : "bg-stone-200"
+                  selections[item.id] !== undefined 
+                    ? "bg-rose-500 scale-110 shadow-xs shadow-rose-500/50" 
+                    : "bg-stone-200 dark:bg-stone-800"
                 }`} 
               />
             ))}
@@ -293,12 +323,12 @@ export default function App() {
 
         {/* Alt Sıra: İpucu & Kurallar Butonu */}
         <div className="mt-2 flex items-center justify-between">
-          <p className="text-xs text-stone-400 font-normal truncate mr-2">
+          <p className="text-xs text-stone-400 dark:text-stone-500 font-normal truncate mr-2">
             {greeting.sub}
           </p>
           <button
             onClick={() => setShowRules(true)}
-            className="shrink-0 flex items-center gap-1 text-[11px] font-semibold text-stone-500 hover:text-rose-600 bg-white border border-stone-200/80 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
+            className="shrink-0 flex items-center gap-1 text-[11px] font-semibold text-stone-500 dark:text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-[#231F1E] border border-stone-200/80 dark:border-stone-800 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
           >
             <BookOpen size={11} className="text-rose-400" />
             <span>Kurallar</span>
@@ -310,29 +340,39 @@ export default function App() {
       <main className="px-5 pt-2 flex-1">
         {selectedMealData && (
           <section 
-            className={`bg-white rounded-3xl p-5 border transition-all duration-200 shadow-2xs ${
-              isSelectedMealDone ? "border-rose-200 shadow-rose-950/5" : "border-stone-100"
+            className={`bg-white dark:bg-[#231F1E] rounded-3xl p-5 border transition-all duration-200 shadow-2xs ${
+              isSelectedMealDone 
+                ? "border-rose-200 dark:border-rose-900/50 shadow-rose-950/5" 
+                : "border-stone-100 dark:border-stone-800/80"
             }`}
           >
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${
-                  isSelectedMealDone ? "bg-rose-500 text-white" : "bg-stone-50 text-stone-500"
+                  isSelectedMealDone 
+                    ? "bg-rose-500 text-white shadow-xs shadow-rose-500/30" 
+                    : "bg-stone-50 dark:bg-stone-800/60 text-stone-500 dark:text-stone-400"
                 }`}>
                   {React.createElement(selectedMealIcon, { size: 19 })}
                 </div>
                 <div>
-                  <h2 className="font-extrabold text-stone-800 text-base tracking-tight">{selectedMealData.title}</h2>
-                  {selectedMealData.note && <p className="text-[11px] text-stone-400 leading-tight mt-0.5">{selectedMealData.note}</p>}
+                  <h2 className="font-extrabold text-stone-800 dark:text-stone-100 text-base tracking-tight">
+                    {selectedMealData.title}
+                  </h2>
+                  {selectedMealData.note && (
+                    <p className="text-[11px] text-stone-400 dark:text-stone-500 leading-tight mt-0.5">
+                      {selectedMealData.note}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {selectedMealData.image && (
                 <button
                   onClick={() => setPreviewImage(selectedMealData.image)}
-                  className="flex items-center gap-1 bg-stone-50 hover:bg-stone-100 text-stone-600 border border-stone-200/70 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl transition-colors active:scale-95"
+                  className="flex items-center gap-1 bg-stone-50 dark:bg-stone-800/80 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200/70 dark:border-stone-700/80 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl transition-colors active:scale-95"
                 >
-                  <Camera size={13} className="text-rose-500" />
+                  <Camera size={13} className="text-rose-500 dark:text-rose-400" />
                   <span>Örnek</span>
                 </button>
               )}
@@ -348,14 +388,14 @@ export default function App() {
                     onClick={() => handleSelect(selectedMealData.id, idx)}
                     className={`cursor-pointer text-xs p-3.5 rounded-2xl border transition-all duration-150 flex items-start gap-3 ${
                       isSelected
-                        ? "bg-rose-50/80 border-rose-200 text-rose-950 font-semibold shadow-2xs"
-                        : "bg-[#FAF7F5]/50 border-stone-100 text-stone-600 hover:bg-stone-50"
+                        ? "bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/50 text-rose-950 dark:text-rose-100 font-semibold shadow-2xs"
+                        : "bg-[#FAF7F5]/50 dark:bg-[#1C1817]/60 border-stone-100 dark:border-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-[#282220]"
                     }`}
                   >
                     <div className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 transition-all ${
                       isSelected 
                         ? "border-rose-500 bg-rose-500 text-white shadow-2xs" 
-                        : "border-stone-300 bg-white"
+                        : "border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800"
                     }`}>
                       {isSelected && <Check size={11} strokeWidth={3} />}
                     </div>
@@ -369,7 +409,7 @@ export default function App() {
       </main>
 
       {/* Alt Sabit Menü */}
-      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/95 backdrop-blur-md border border-stone-100 shadow-xl shadow-stone-900/5 rounded-3xl p-1.5 flex items-center justify-around z-40">
+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around z-40 transition-colors duration-300">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeMeal === item.id;
@@ -382,19 +422,19 @@ export default function App() {
               className={`relative flex flex-col items-center justify-center py-2 px-4 rounded-2xl transition-all duration-200 active:scale-95 ${
                 isActive 
                   ? "bg-rose-500 text-white shadow-sm shadow-rose-500/30" 
-                  : "text-stone-400 hover:text-stone-700"
+                  : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
               }`}
             >
               <div className="relative">
                 <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
                 {isDone && (
                   <span className={`absolute -top-1 -right-1.5 w-2 h-2 rounded-full ring-2 ${
-                    isActive ? "bg-emerald-300 ring-rose-500" : "bg-emerald-500 ring-white"
+                    isActive ? "bg-emerald-300 ring-rose-500" : "bg-emerald-500 ring-white dark:ring-[#231F1E]"
                   }`} />
                 )}
               </div>
               <span className={`text-[11px] tracking-tight mt-1 font-semibold ${
-                isActive ? "text-white" : "text-stone-500"
+                isActive ? "text-white" : "text-stone-500 dark:text-stone-400"
               }`}>
                 {item.label}
               </span>
@@ -406,23 +446,23 @@ export default function App() {
       {/* Kurallar Modali */}
       {showRules && (
         <div 
-          className="fixed inset-0 z-50 bg-stone-900/30 backdrop-blur-xs flex items-center justify-center p-6 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs flex items-center justify-center p-6 animate-in fade-in duration-200"
           onClick={() => setShowRules(false)}
         >
           <div 
-            className="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl border border-stone-100 space-y-4"
+            className="bg-white dark:bg-[#231F1E] rounded-3xl p-6 max-w-xs w-full shadow-2xl border border-stone-100 dark:border-stone-800 space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center pb-2 border-b border-stone-100">
-              <span className="text-xs font-bold uppercase tracking-wider text-stone-700">Diyet Prensipleri</span>
+            <div className="flex justify-between items-center pb-2 border-b border-stone-100 dark:border-stone-800">
+              <span className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-200">Diyet Prensipleri</span>
               <button 
                 onClick={() => setShowRules(false)} 
-                className="w-7 h-7 rounded-full bg-stone-100 text-stone-400 hover:text-stone-700 flex items-center justify-center"
+                className="w-7 h-7 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 flex items-center justify-center transition-colors"
               >
                 <X size={15} />
               </button>
             </div>
-            <ul className="text-xs text-stone-600 space-y-3 leading-relaxed">
+            <ul className="text-xs text-stone-600 dark:text-stone-300 space-y-3 leading-relaxed">
               {dietConfig.warnings.map((w, idx) => (
                 <li key={idx} className="flex items-start gap-2.5">
                   <span className="text-rose-500 text-sm leading-none">•</span>
@@ -446,18 +486,18 @@ export default function App() {
       {/* Tabak Görseli Modal */}
       {previewImage && (
         <div 
-          className="fixed inset-0 z-50 bg-stone-900/50 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-stone-900/50 dark:bg-black/70 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in duration-200"
           onClick={() => setPreviewImage(null)}
         >
           <div 
-            className="relative max-w-sm w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-stone-100 p-2" 
+            className="relative max-w-sm w-full bg-white dark:bg-[#231F1E] rounded-3xl overflow-hidden shadow-2xl border border-stone-100 dark:border-stone-800 p-2" 
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center px-3 py-2">
-              <span className="text-xs font-bold text-stone-700">Örnek Tabak Sunumu</span>
+              <span className="text-xs font-bold text-stone-700 dark:text-stone-200">Örnek Tabak Sunumu</span>
               <button 
                 onClick={() => setPreviewImage(null)}
-                className="w-7 h-7 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-full flex items-center justify-center transition-colors"
+                className="w-7 h-7 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-full flex items-center justify-center transition-colors"
               >
                 <X size={15} />
               </button>
