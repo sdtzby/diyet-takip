@@ -8,7 +8,7 @@ import { format, addDays, subDays } from "date-fns";
 import { tr } from "date-fns/locale";
 import { 
   ChevronLeft, ChevronRight, Sparkles, LogOut, 
-  Check, Settings, Camera, X, Sun, Moon, Coffee, HeartHandshake 
+  Check, Settings, Camera, X, Sun, Moon, Coffee, BookOpen
 } from "lucide-react";
 
 const MEAL_ICONS = {
@@ -41,9 +41,9 @@ export default function App() {
   const [selections, setSelections] = useState({});
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [showRules, setShowRules] = useState(false);
   const [activeMeal, setActiveMeal] = useState(getCurrentMealByHour());
 
-  // Giriş form alanları
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
@@ -51,12 +51,9 @@ export default function App() {
   const dateKey = format(currentDate, "yyyy-MM-dd");
   const isAdmin = user && user.uid === ADMIN_UID;
 
-  // İlerleme hesabı
   const totalMeals = dietConfig.meals.length;
   const completedMeals = Object.keys(selections).filter(k => selections[k] !== undefined).length;
-  const progressPercent = totalMeals > 0 ? Math.round((completedMeals / totalMeals) * 100) : 0;
 
-  // Saate ve kullanıcıya göre dinamik selamlama
   const getGreeting = () => {
     const hour = new Date().getHours();
     const isWife = user?.email?.toLowerCase().includes("cigdem");
@@ -64,22 +61,26 @@ export default function App() {
 
     if (hour >= 5 && hour < 12) {
       return { 
-        title: `Günaydın, ${name}`, 
+        word: "Günaydın",
+        name: name,
         sub: isWife ? "Güne enerjik ve hafif bir başlangıç yap" : "Günün ilk ritmi başlıyor" 
       };
     } else if (hour >= 12 && hour < 18) {
       return { 
-        title: `Tünaydın, ${name}`, 
+        word: "Tünaydın",
+        name: name,
         sub: isWife ? "Harika gidiyorsun, su içmeyi unutma 💧" : "Dengeni korumaya devam et" 
       };
     } else if (hour >= 18 && hour < 23) {
       return { 
-        title: `İyi Akşamlar, ${name}`, 
+        word: "İyi Akşamlar",
+        name: name,
         sub: isWife ? "Hafif bir akşamla günü tamamla ✨" : "Akşam dengesini koru" 
       };
     } else {
       return { 
-        title: `Huzurlu Geceler, ${name}`, 
+        word: "Huzurlu Geceler",
+        name: name,
         sub: "Güzelce dinlenip enerjini topla 🌙" 
       };
     }
@@ -107,7 +108,7 @@ export default function App() {
           await setDoc(docRef, DIET_DATA);
         }
       } catch (err) {
-        console.error("Menü yüklenirken hata:", err);
+        console.error("Menü yükleme hatası:", err);
       }
     };
     fetchDietConfig();
@@ -160,8 +161,8 @@ export default function App() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#FAF7F5] flex flex-col items-center justify-center gap-3">
-        <div className="w-10 h-10 border-3 border-rose-200 border-t-rose-500 rounded-full animate-spin" />
-        <span className="text-xs tracking-wider text-stone-500 font-medium">Günlüğün Hazırlanıyor...</span>
+        <div className="w-9 h-9 border-2 border-rose-200 border-t-rose-500 rounded-full animate-spin" />
+        <span className="text-[11px] tracking-widest text-stone-400 uppercase font-medium">Yükleniyor</span>
       </div>
     );
   }
@@ -169,40 +170,40 @@ export default function App() {
   // Giriş Ekranı
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#FFF5F2] via-[#FAF7F5] to-[#F3EDE8] flex items-center justify-center p-5">
-        <div className="w-full max-w-sm bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-xl shadow-rose-900/5 border border-rose-100">
+      <div className="min-h-screen bg-[#FAF7F5] flex items-center justify-center p-6">
+        <div className="w-full max-w-sm bg-white p-8 rounded-3xl shadow-sm border border-stone-100">
           <div className="text-center mb-6">
-            <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-rose-500 shadow-xs">
-              <Sparkles size={22} />
+            <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-rose-500">
+              <Sparkles size={20} />
             </div>
             <h1 className="text-xl font-bold text-stone-800 tracking-tight">Diyet & Yaşam Ritmi</h1>
-            <p className="text-xs text-stone-500 mt-1">Günün menüsünü takip etmeye başla</p>
+            <p className="text-xs text-stone-400 mt-1">Günün menüsünü takip etmeye başla</p>
           </div>
 
           {authError && (
-            <div className="text-rose-700 text-xs mb-4 bg-rose-50/80 p-3 rounded-xl border border-rose-200/60 text-center">
+            <div className="text-rose-600 text-xs mb-4 bg-rose-50 p-3 rounded-xl border border-rose-100 text-center">
               {authError}
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-stone-600 mb-1.5 ml-1">E-Posta</label>
+              <label className="block text-xs font-semibold text-stone-500 mb-1 ml-1">E-Posta</label>
               <input
                 type="email"
                 required
-                className="w-full bg-stone-50/70 border border-stone-200 rounded-2xl px-4 py-3 text-xs text-stone-800 focus:outline-hidden focus:ring-2 focus:ring-rose-400 focus:bg-white transition-all"
+                className="w-full bg-stone-50 border border-stone-200/80 rounded-2xl px-4 py-3 text-xs text-stone-800 focus:outline-hidden focus:border-rose-400 focus:bg-white transition-all"
                 value={email}
                 placeholder="ornek@hesap.com"
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-stone-600 mb-1.5 ml-1">Şifre</label>
+              <label className="block text-xs font-semibold text-stone-500 mb-1 ml-1">Şifre</label>
               <input
                 type="password"
                 required
-                className="w-full bg-stone-50/70 border border-stone-200 rounded-2xl px-4 py-3 text-xs text-stone-800 focus:outline-hidden focus:ring-2 focus:ring-rose-400 focus:bg-white transition-all"
+                className="w-full bg-stone-50 border border-stone-200/80 rounded-2xl px-4 py-3 text-xs text-stone-800 focus:outline-hidden focus:border-rose-400 focus:bg-white transition-all"
                 value={password}
                 placeholder="••••••••"
                 onChange={(e) => setPassword(e.target.value)}
@@ -210,9 +211,9 @@ export default function App() {
             </div>
             <button
               type="submit"
-              className="w-full mt-2 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white text-xs font-bold py-3.5 rounded-2xl shadow-lg shadow-rose-500/25 transition-all active:scale-[0.98]"
+              className="w-full mt-2 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold py-3.5 rounded-2xl shadow-sm shadow-rose-500/20 transition-all active:scale-[0.98]"
             >
-              Uygulamaya Gir
+              Giriş Yap
             </button>
           </form>
         </div>
@@ -220,7 +221,6 @@ export default function App() {
     );
   }
 
-  // Şu an seçili olan tek öğün nesnesi
   const selectedMealData = dietConfig.meals.find((m) => m.id === activeMeal) || dietConfig.meals[0];
   const selectedMealIcon = MEAL_ICONS[selectedMealData?.id] || Sparkles;
   const isSelectedMealDone = selectedMealData && selections[selectedMealData.id] !== undefined;
@@ -228,10 +228,9 @@ export default function App() {
   return (
     <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] pb-28 flex flex-col font-sans text-stone-800 select-none">
       
-      {/* Üst Bar & Dinamik Selamlama */}
-      {/* Minimal & Editöryal Üst Alan */}
+      {/* Minimal Editöryal Üst Alan */}
       <header className="px-6 pt-7 pb-4 bg-[#FAF7F5]">
-        {/* Üst Sıra: Tarih Gezgini & Aksiyonlar */}
+        {/* Üst Sıra: Tarih ve Eylemler */}
         <div className="flex items-center justify-between text-stone-400 mb-4">
           <div className="flex items-center gap-2">
             <button 
@@ -255,7 +254,7 @@ export default function App() {
             {isAdmin && (
               <button 
                 onClick={() => setIsAdminOpen(true)} 
-                className="hover:text-stone-800 transition-colors"
+                className="text-stone-400 hover:text-stone-800 transition-colors"
                 title="Yönetici Paneli"
               >
                 <Settings size={16} />
@@ -263,7 +262,7 @@ export default function App() {
             )}
             <button 
               onClick={() => signOut(auth)} 
-              className="hover:text-rose-600 transition-colors"
+              className="text-stone-400 hover:text-rose-600 transition-colors"
               title="Çıkış"
             >
               <LogOut size={16} />
@@ -271,14 +270,13 @@ export default function App() {
           </div>
         </div>
 
-        {/* Orta Sıra: Sade Karşılama & İlerleme Noktaları */}
+        {/* Orta Sıra: Selamlama & 4 Mikro Nokta */}
         <div className="flex items-baseline justify-between">
           <h1 className="text-2xl font-light tracking-tight text-stone-800">
-            {greeting.title.split(",")[0]}, <span className="font-semibold text-rose-600">{greeting.title.split(",")[1]}</span>
+            {greeting.word}, <span className="font-semibold text-rose-500">{greeting.name}</span>
           </h1>
 
-          {/* 4 Mikro Gösterge */}
-          <div className="flex items-center gap-1.5" title={`${completedMeals}/4 Öğün Tamamlandı`}>
+          <div className="flex items-center gap-1.5" title={`${completedMeals}/${totalMeals} Öğün Tamamlandı`}>
             {NAV_ITEMS.map((item) => (
               <div 
                 key={item.id} 
@@ -290,58 +288,39 @@ export default function App() {
           </div>
         </div>
 
-        {/* Alt Sıra: Tek Satırlık Zarif Kural Çipi */}
-        <div className="mt-3 flex items-center justify-between">
+        {/* Alt Sıra: İpucu & Kurallar Butonu */}
+        <div className="mt-2.5 flex items-center justify-between">
           <p className="text-xs text-stone-400 font-normal">
             {greeting.sub}
           </p>
           <button
-            onClick={() => setPreviewImage("rules")} // Modal tetikleyici
-            className="text-[11px] font-semibold text-stone-500 hover:text-rose-600 bg-white border border-stone-200/80 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
+            onClick={() => setShowRules(true)}
+            className="flex items-center gap-1 text-[11px] font-semibold text-stone-500 hover:text-rose-600 bg-white border border-stone-200/80 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
           >
-            Kurallar (4)
+            <BookOpen size={11} className="text-rose-400" />
+            <span>Kurallar</span>
           </button>
         </div>
       </header>
 
-      {/* Ana İçerik */}
-      <main className="p-4 space-y-4 flex-1">
-        
-        {/* Hatırlatıcı Kurallar Kartı */}
-        <div className="bg-gradient-to-br from-amber-50/80 to-orange-50/60 border border-amber-200/60 rounded-3xl p-4 shadow-xs">
-          <div className="flex items-center gap-2 text-amber-800 font-bold text-xs uppercase tracking-wider mb-2">
-            <div className="p-1 bg-amber-200/50 rounded-lg text-amber-700">
-              <HeartHandshake size={14} />
-            </div>
-            <span>Günün Hatırlatıcıları</span>
-          </div>
-          <ul className="text-xs text-amber-950/80 space-y-1.5 pl-2 leading-relaxed">
-            {dietConfig.warnings.map((w, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <span className="text-amber-500 text-sm leading-none">•</span>
-                <span>{w}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Sadece Seçili Olan Tek Öğün Görünür */}
+      {/* Ana İçerik: Sadece Seçilen Öğün */}
+      <main className="px-5 pt-2 flex-1">
         {selectedMealData && (
           <section 
-            className={`bg-white rounded-3xl p-4 border transition-all duration-300 shadow-xs animate-in fade-in zoom-in-95 ${
-              isSelectedMealDone ? "border-rose-200 shadow-rose-950/5" : "border-stone-200/60"
+            className={`bg-white rounded-3xl p-5 border transition-all duration-200 shadow-2xs ${
+              isSelectedMealDone ? "border-rose-200 shadow-rose-950/5" : "border-stone-100"
             }`}
           >
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex items-center gap-2.5">
-                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-colors ${
-                  isSelectedMealDone ? "bg-rose-500 text-white" : "bg-stone-100 text-stone-500"
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${
+                  isSelectedMealDone ? "bg-rose-500 text-white" : "bg-stone-50 text-stone-500"
                 }`}>
-                  {React.createElement(selectedMealIcon, { size: 18 })}
+                  {React.createElement(selectedMealIcon, { size: 19 })}
                 </div>
                 <div>
-                  <h2 className="font-extrabold text-stone-800 text-sm tracking-tight">{selectedMealData.title}</h2>
-                  {selectedMealData.note && <p className="text-[11px] text-stone-400 leading-tight">{selectedMealData.note}</p>}
+                  <h2 className="font-extrabold text-stone-800 text-base tracking-tight">{selectedMealData.title}</h2>
+                  {selectedMealData.note && <p className="text-[11px] text-stone-400 leading-tight mt-0.5">{selectedMealData.note}</p>}
                 </div>
               </div>
 
@@ -356,7 +335,7 @@ export default function App() {
               )}
             </div>
 
-            {/* Seçenekler */}
+            {/* Öğün Seçenekleri */}
             <div className="space-y-2.5 pt-1">
               {selectedMealData.options.map((opt, idx) => {
                 const isSelected = selections[selectedMealData.id] === idx;
@@ -364,20 +343,20 @@ export default function App() {
                   <div
                     key={idx}
                     onClick={() => handleSelect(selectedMealData.id, idx)}
-                    className={`cursor-pointer text-xs p-3.5 rounded-2xl border transition-all duration-200 flex items-start gap-3 ${
+                    className={`cursor-pointer text-xs p-3.5 rounded-2xl border transition-all duration-150 flex items-start gap-3 ${
                       isSelected
-                        ? "bg-rose-50/90 border-rose-300 text-rose-950 font-semibold shadow-xs"
+                        ? "bg-rose-50/80 border-rose-200 text-rose-950 font-semibold shadow-2xs"
                         : "bg-[#FAF7F5]/50 border-stone-100 text-stone-600 hover:bg-stone-50"
                     }`}
                   >
                     <div className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 transition-all ${
                       isSelected 
-                        ? "border-rose-500 bg-rose-500 text-white shadow-xs" 
+                        ? "border-rose-500 bg-rose-500 text-white shadow-2xs" 
                         : "border-stone-300 bg-white"
                     }`}>
                       {isSelected && <Check size={11} strokeWidth={3} />}
                     </div>
-                    <span className="leading-snug">{opt}</span>
+                    <span className="leading-snug pt-0.2">{opt}</span>
                   </div>
                 );
               })}
@@ -387,7 +366,7 @@ export default function App() {
       </main>
 
       {/* Alt Sabit Menü */}
-      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/90 backdrop-blur-md border border-rose-100/90 shadow-xl shadow-rose-950/10 rounded-3xl p-1.5 flex items-center justify-around z-40">
+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/95 backdrop-blur-md border border-stone-100 shadow-xl shadow-stone-900/5 rounded-3xl p-1.5 flex items-center justify-around z-40">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeMeal === item.id;
@@ -399,8 +378,8 @@ export default function App() {
               onClick={() => setActiveMeal(item.id)}
               className={`relative flex flex-col items-center justify-center py-2 px-4 rounded-2xl transition-all duration-200 active:scale-95 ${
                 isActive 
-                  ? "bg-rose-500 text-white shadow-md shadow-rose-500/30" 
-                  : "text-stone-500 hover:text-stone-800 hover:bg-stone-50"
+                  ? "bg-rose-500 text-white shadow-sm shadow-rose-500/30" 
+                  : "text-stone-400 hover:text-stone-700"
               }`}
             >
               <div className="relative">
@@ -411,8 +390,8 @@ export default function App() {
                   }`} />
                 )}
               </div>
-              <span className={`text-[11px] tracking-tight mt-1 font-bold ${
-                isActive ? "text-white" : "text-stone-600"
+              <span className={`text-[11px] tracking-tight mt-1 font-semibold ${
+                isActive ? "text-white" : "text-stone-500"
               }`}>
                 {item.label}
               </span>
@@ -420,6 +399,37 @@ export default function App() {
           );
         })}
       </nav>
+
+      {/* Kurallar Modali */}
+      {showRules && (
+        <div 
+          className="fixed inset-0 z-50 bg-stone-900/30 backdrop-blur-xs flex items-center justify-center p-6 animate-in fade-in duration-200"
+          onClick={() => setShowRules(false)}
+        >
+          <div 
+            className="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl border border-stone-100 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center pb-2 border-b border-stone-100">
+              <span className="text-xs font-bold uppercase tracking-wider text-stone-700">Diyet Prensipleri</span>
+              <button 
+                onClick={() => setShowRules(false)} 
+                className="w-7 h-7 rounded-full bg-stone-100 text-stone-400 hover:text-stone-700 flex items-center justify-center"
+              >
+                <X size={15} />
+              </button>
+            </div>
+            <ul className="text-xs text-stone-600 space-y-3 leading-relaxed">
+              {dietConfig.warnings.map((w, idx) => (
+                <li key={idx} className="flex items-start gap-2.5">
+                  <span className="text-rose-500 text-sm leading-none">•</span>
+                  <span>{w}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* Admin Panel Modal */}
       {isAdminOpen && (
@@ -433,11 +443,11 @@ export default function App() {
       {/* Tabak Görseli Modal */}
       {previewImage && (
         <div 
-          className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-stone-900/50 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in duration-200"
           onClick={() => setPreviewImage(null)}
         >
           <div 
-            className="relative max-w-sm w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-rose-100 p-2" 
+            className="relative max-w-sm w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-stone-100 p-2" 
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center px-3 py-2">
