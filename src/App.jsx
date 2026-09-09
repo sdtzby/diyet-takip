@@ -27,10 +27,41 @@ export default function App() {
   const [selections, setSelections] = useState({});
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
+  // Saate ve kullanıcıya göre dinamik karşılama
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    const isWife = user?.email?.toLowerCase().includes("cigdem");
+    const name = isWife ? "Çiğdem 🌸" : "Sedat";
+
+    if (hour >= 5 && hour < 12) {
+      return { 
+        title: `Günaydın, ${name}`, 
+        sub: isWife ? "Güne enerjik ve hafif bir başlangıç yap" : "Günün ilk ritmi başlıyor" 
+      };
+    } else if (hour >= 12 && hour < 18) {
+      return { 
+        title: `Tünaydın, ${name}`, 
+        sub: isWife ? "Harika gidiyorsun, su içmeyi unutma 💧" : "Dengeni korumaya devam et" 
+      };
+    } else if (hour >= 18 && hour < 23) {
+      return { 
+        title: `İyi Akşamlar, ${name}`, 
+        sub: isWife ? "Hafif bir akşamla günü tamamla ✨" : "Akşam dengesini koru" 
+      };
+    } else {
+      return { 
+        title: `Huzurlu Geceler, ${name}`, 
+        sub: "Güzelce dinlenip enerjini topla 🌙" 
+      };
+    }
+  };
+
+  const greeting = getGreeting();
 
   const dateKey = format(currentDate, "yyyy-MM-dd");
   const isAdmin = user && user.uid === ADMIN_UID;
