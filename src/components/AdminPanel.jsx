@@ -1,150 +1,254 @@
 import React, { useState } from "react";
-import { doc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import { Save, Plus, Trash2, X } from "lucide-react";
+import { doc, setDoc } from "firebase/firestore";
+import { X, Plus, Trash2, Save, Sparkles, BookOpen, Utensils } from "lucide-react";
 
 export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
-  const [data, setData] = useState(initialData);
+  const [formData, setFormData] = useState(JSON.parse(JSON.stringify(initialData)));
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState("meals"); // "meals" | "warnings"
 
-  // Uyarı işlemleri
-  const handleWarningChange = (idx, value) => {
-    const updated = [...data.warnings];
-    updated[idx] = value;
-    setData({ ...data, warnings: updated });
+  // Kural işlemleri
+  const handleWarningChange = (index, value) => {
+    const updated = [...formData.warnings];
+    updated[index] = value;
+    setFormData({ ...formData, warnings: updated });
   };
 
   const addWarning = () => {
-    setData({ ...data, warnings: [...data.warnings, "Yeni kural metni..."] });
-  };
-
-  const removeWarning = (idx) => {
-    setData({ ...data, warnings: data.warnings.filter((_, i) => i !== idx) });
-  };
-
-  // Öğün opsiyon işlemleri
-  const handleOptionChange = (mealId, optIdx, value) => {
-    const updatedMeals = data.meals.map((m) => {
-      if (m.id !== mealId) return m;
-      const updatedOpts = [...m.options];
-      updatedOpts[optIdx] = value;
-      return { ...m, options: updatedOpts };
+    setFormData({
+      ...formData,
+      warnings: [...formData.warnings, "Yeni prensip ekleyin..."]
     });
-    setData({ ...data, meals: updatedMeals });
   };
 
-  const addOption = (mealId) => {
-    const updatedMeals = data.meals.map((m) => {
-      if (m.id !== mealId) return m;
-      return { ...m, options: [...m.options, "Yeni alternatif metni..."] };
-    });
-    setData({ ...data, meals: updatedMeals });
+  const removeWarning = (index) => {
+    const updated = formData.warnings.filter((_, i) => i !== index);
+    setFormData({ ...formData, warnings: updated });
   };
 
-  const removeOption = (mealId, optIdx) => {
-    const updatedMeals = data.meals.map((m) => {
-      if (m.id !== mealId) return m;
-      return { ...m, options: m.options.filter((_, i) => i !== optIdx) };
-    });
-    setData({ ...data, meals: updatedMeals });
+  // Öğün işlemleri
+  const handleMealFieldChange = (mealIndex, field, value) => {
+    const updatedMeals = [...formData.meals];
+    updatedMeals[mealIndex] = { ...updatedMeals[mealIndex], [field]: value };
+    setFormData({ ...formData, meals: updatedMeals });
   };
 
-  // Firestore'a kaydetme
+  const handleOptionChange = (mealIndex, optionIndex, value) => {
+    const updatedMeals = [...formData.meals];
+    const updatedOptions = [...updatedMeals[mealIndex].options];
+    updatedOptions[optionIndex] = value;
+    updatedMeals[mealIndex].options = updatedOptions;
+    setFormData({ ...formData, meals: updatedMeals });
+  };
+
+  const addOption = (mealIndex) => {
+    const updatedMeals = [...formData.meals];
+    updatedMeals[mealIndex].options.push("Yeni alternatif...");
+    setFormData({ ...formData, meals: updatedMeals });
+  };
+
+  const removeOption = (mealIndex, optionIndex) => {
+    const updatedMeals = [...formData.meals];
+    updatedMeals[mealIndex].options = updatedMeals[mealIndex].options.filter((_, i) => i !== optionIndex);
+    setFormData({ ...formData, meals: updatedMeals });
+  };
+
+  // Kaydet
   const handleSave = async () => {
     setSaving(true);
     try {
-      await setDoc(doc(db, "config", "diet_data"), data);
-      onSaveSuccess(data);
+      await setDoc(doc(db, "config", "diet_data"), formData);
+      onSaveSuccess(formData);
       onClose();
     } catch (err) {
-      alert("Hata: Kaydedilemedi! Yetki kuralını kontrol et: " + err.message);
+      console.error("Diyet ayarları kaydedilemedi:", err);
+      alert("Ayarlar kaydedilirken hata oluştu.");
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex justify-end">
-      <div className="w-full max-w-lg bg-white h-full overflow-y-auto p-5 flex flex-col shadow-2xl">
-        <div className="flex justify-between items-center pb-4 border-b border-slate-200">
-          <h2 className="text-base font-bold text-slate-800">Diyet ve Kural Yönetimi</h2>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700">
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="space-y-6 py-4 flex-1">
-          {/* Uyarılar Düzenleme */}
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Kritik Kurallar</span>
-              <button
-                onClick={addWarning}
-                className="text-xs flex items-center gap-1 font-semibold text-emerald-600 hover:text-emerald-700"
-              >
-                <Plus size={14} /> Kural Ekle
-              </button>
-            </div>
-            {data.warnings.map((w, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={w}
-                  onChange={(e) => handleWarningChange(idx, e.target.value)}
-                  className="flex-1 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-hidden"
-                />
-                <button onClick={() => removeWarning(idx)} className="text-slate-400 hover:text-red-500 p-1">
-                  <Trash2 size={15} />
-                </button>
+    <div 
+      className="fixed inset-0 z-50 bg-stone-900/50 dark:bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white dark:bg-[#1C1817] border border-stone-200 dark:border-stone-800 rounded-3xl w-full max-w-lg max-h-[88vh] flex flex-col shadow-2xl overflow-hidden transition-colors duration-300"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Üst Başlık & Sekmeler */}
+        <div className="px-5 pt-4 pb-3 border-b border-stone-100 dark:border-stone-800 shrink-0 bg-white/95 dark:bg-[#1C1817]/95">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center">
+                <Sparkles size={16} />
               </div>
-            ))}
+              <h2 className="text-base font-bold text-stone-800 dark:text-stone-100 tracking-tight">
+                Diyet Yapılandırması
+              </h2>
+            </div>
+            <button 
+              onClick={onClose}
+              className="w-7 h-7 rounded-full bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 flex items-center justify-center transition-colors"
+            >
+              <X size={15} />
+            </button>
           </div>
 
-          <hr className="border-slate-200" />
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab("meals")}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === "meals"
+                  ? "bg-rose-500 text-white shadow-xs shadow-rose-500/30"
+                  : "bg-stone-100 dark:bg-stone-800/60 text-stone-500 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800"
+              }`}
+            >
+              <Utensils size={13} />
+              <span>Öğünler & Alternatifler</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("warnings")}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-semibold transition-all ${
+                activeTab === "warnings"
+                  ? "bg-rose-500 text-white shadow-xs shadow-rose-500/30"
+                  : "bg-stone-100 dark:bg-stone-800/60 text-stone-500 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800"
+              }`}
+            >
+              <BookOpen size={13} />
+              <span>Diyet Prensipleri ({formData.warnings.length})</span>
+            </button>
+          </div>
+        </div>
 
-          {/* Öğün Seçenekleri Düzenleme */}
-          <div className="space-y-6">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 block">Öğün Alternatifleri</span>
-            {data.meals.map((meal) => (
-              <div key={meal.id} className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2.5">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-slate-800">{meal.title}</span>
-                  <button
-                    onClick={() => addOption(meal.id)}
-                    className="text-[11px] flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-700"
-                  >
-                    <Plus size={13} /> Seçenek Ekle
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {meal.options.map((opt, optIdx) => (
-                    <div key={optIdx} className="flex items-center gap-2">
+        {/* Gövde / İçerik */}
+        <div className="p-5 overflow-y-auto flex-1 space-y-4 text-xs text-stone-700 dark:text-stone-200">
+          {activeTab === "meals" && (
+            <div className="space-y-4">
+              {formData.meals.map((meal, mIdx) => (
+                <div 
+                  key={meal.id} 
+                  className="bg-stone-50/70 dark:bg-[#241F1D] border border-stone-200/80 dark:border-stone-800 p-4 rounded-2xl space-y-3"
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-stone-800 dark:text-stone-100 text-xs uppercase tracking-wide">
+                      {meal.title}
+                    </span>
+                    <span className="text-[10px] text-stone-400 dark:text-stone-500 font-mono">
+                      ID: {meal.id}
+                    </span>
+                  </div>
+
+                  {/* Not ve Görsel Dosya Adı */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-semibold text-stone-400 dark:text-stone-500 mb-1">
+                        Öğün Notu / Zamanı
+                      </label>
                       <input
                         type="text"
-                        value={opt}
-                        onChange={(e) => handleOptionChange(meal.id, optIdx, e.target.value)}
-                        className="flex-1 bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-hidden"
+                        value={meal.note || ""}
+                        onChange={(e) => handleMealFieldChange(mIdx, "note", e.target.value)}
+                        placeholder="Örn: 09:00 - 10:00"
+                        className="w-full bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1.5 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
                       />
-                      <button onClick={() => removeOption(meal.id, optIdx)} className="text-slate-400 hover:text-red-500 p-1">
-                        <Trash2 size={14} />
-                      </button>
                     </div>
-                  ))}
+                    <div>
+                      <label className="block text-[10px] font-semibold text-stone-400 dark:text-stone-500 mb-1">
+                        Görsel Adı (public/images/...)
+                      </label>
+                      <input
+                        type="text"
+                        value={meal.image || ""}
+                        onChange={(e) => handleMealFieldChange(mIdx, "image", e.target.value)}
+                        placeholder="Örn: kahvalti.jpg"
+                        className="w-full bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1.5 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Alternatifler Listesi */}
+                  <div className="space-y-2 pt-1">
+                    <label className="block text-[10px] font-semibold text-stone-400 dark:text-stone-500">
+                      Tüketim Alternatifleri
+                    </label>
+                    {meal.options.map((opt, oIdx) => (
+                      <div key={oIdx} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={opt}
+                          onChange={(e) => handleOptionChange(mIdx, oIdx, e.target.value)}
+                          className="flex-1 bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1.5 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
+                        />
+                        <button
+                          onClick={() => removeOption(mIdx, oIdx)}
+                          className="p-1.5 text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                          title="Alternatifi Sil"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => addOption(mIdx)}
+                      className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline"
+                    >
+                      <Plus size={13} />
+                      <span>Yeni Alternatif Ekle</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === "warnings" && (
+            <div className="space-y-2.5">
+              {formData.warnings.map((w, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-stone-50/70 dark:bg-[#241F1D] border border-stone-200/80 dark:border-stone-800 p-2.5 rounded-xl">
+                  <span className="text-rose-500 font-bold ml-1">•</span>
+                  <input
+                    type="text"
+                    value={w}
+                    onChange={(e) => handleWarningChange(idx, e.target.value)}
+                    className="flex-1 bg-transparent border-0 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden"
+                  />
+                  <button
+                    onClick={() => removeWarning(idx)}
+                    className="p-1 text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={addWarning}
+                className="w-full mt-2 py-2 border border-dashed border-rose-300 dark:border-rose-800/80 rounded-xl text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Plus size={14} />
+                <span>Yeni Prensip Ekle</span>
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Kaydet Butonu */}
-        <div className="pt-4 border-t border-slate-200">
+        {/* Alt Aksiyon Butonları */}
+        <div className="px-5 py-3 border-t border-stone-100 dark:border-stone-800 bg-stone-50/80 dark:bg-[#1C1817] flex justify-end gap-2 shrink-0">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-600 dark:text-stone-400 hover:bg-stone-200/60 dark:hover:bg-stone-800 transition-colors"
+          >
+            İptal
+          </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 bg-rose-500 hover:bg-rose-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-xs shadow-rose-500/25 transition-all disabled:opacity-60 active:scale-95"
           >
-            <Save size={15} />
-            {saving ? "Kaydediliyor..." : "Değişiklikleri Kaydet"}
+            <Save size={14} />
+            <span>{saving ? "Kaydediliyor..." : "Değişiklikleri Kaydet"}</span>
           </button>
         </div>
       </div>
