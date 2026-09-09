@@ -22,4 +22,4 @@ export const db = initializeFirestore(app, {
 });
 
 // Admin yetkisi için senin Firebase Auth UID değerin:
-export const ADMIN_UID = "uNgi0BvGX4Xfe94M2W4BFGich3V2";
+export const ADMIN_UID = "ILgq1oNPYjbIepVXlIDRLMxmzn92";
