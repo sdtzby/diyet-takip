@@ -211,14 +211,15 @@ export default function App() {
       {/* Üst Bar & Tarih Gezgini */}
       <header className="sticky top-0 z-30 bg-[#FAF7F5]/90 backdrop-blur-md px-5 pt-4 pb-3 border-b border-stone-200/50">
         <div className="flex justify-between items-center mb-3">
-          <div>
-            <span className="text-[11px] font-semibold text-rose-500 uppercase tracking-widest block">
-              Beslenme Rehberim
-            </span>
-            <h1 className="text-lg font-extrabold text-stone-800 tracking-tight">
-              Günün Ritmi
-            </h1>
-          </div>
+          {/* Eski "Beslenme Rehberim / Günün Ritmi" yerine: */}
+<div>
+  <span className="text-[11px] font-semibold text-rose-500 uppercase tracking-widest block">
+    {greeting.sub}
+  </span>
+  <h1 className="text-lg font-extrabold text-stone-800 tracking-tight">
+    {greeting.title}
+  </h1>
+</div>
           <div className="flex items-center gap-1.5">
             {isAdmin && (
               <button 
