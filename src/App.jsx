@@ -87,7 +87,6 @@ export default function App() {
 
   const greeting = getGreeting();
 
-  // 1. Auth Takibi
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -96,7 +95,6 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Diyet Şablonunu Firestore'dan Çek
   useEffect(() => {
     if (!user) return;
     const fetchDietConfig = async () => {
@@ -115,7 +113,6 @@ export default function App() {
     fetchDietConfig();
   }, [user, isAdmin]);
 
-  // 3. Seçili Günün Tercihlerini Çek
   useEffect(() => {
     if (!user) return;
     const fetchLog = async () => {
@@ -129,28 +126,6 @@ export default function App() {
     };
     fetchLog();
   }, [user, dateKey]);
-
-  // 4. Sayfa açıldığında saate uygun öğüne otomatik kaydır
-  useEffect(() => {
-    if (!user) return;
-    const current = getCurrentMealByHour();
-    setActiveMeal(current);
-    const timer = setTimeout(() => {
-      const el = document.getElementById(current);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [user]);
-
-  const scrollToMeal = (mealId) => {
-    setActiveMeal(mealId);
-    const el = document.getElementById(mealId);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  };
 
   const handleSelect = async (mealId, optionIndex) => {
     const updated = { ...selections };
@@ -194,7 +169,7 @@ export default function App() {
   // Giriş Ekranı
   if (!user) {
     return (
-      <div className="min-h-screen bg-linear-to-b from-[#FFF5F2] via-[#FAF7F5] to-[#F3EDE8] flex items-center justify-center p-5">
+      <div className="min-h-screen bg-gradient-to-b from-[#FFF5F2] via-[#FAF7F5] to-[#F3EDE8] flex items-center justify-center p-5">
         <div className="w-full max-w-sm bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-xl shadow-rose-900/5 border border-rose-100">
           <div className="text-center mb-6">
             <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-rose-500 shadow-xs">
@@ -235,7 +210,7 @@ export default function App() {
             </div>
             <button
               type="submit"
-              className="w-full mt-2 bg-linear-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white text-xs font-bold py-3.5 rounded-2xl shadow-lg shadow-rose-500/25 transition-all active:scale-[0.98]"
+              className="w-full mt-2 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white text-xs font-bold py-3.5 rounded-2xl shadow-lg shadow-rose-500/25 transition-all active:scale-[0.98]"
             >
               Uygulamaya Gir
             </button>
@@ -244,6 +219,11 @@ export default function App() {
       </div>
     );
   }
+
+  // Şu an seçili olan tek öğün nesnesi
+  const selectedMealData = dietConfig.meals.find((m) => m.id === activeMeal) || dietConfig.meals[0];
+  const selectedMealIcon = MEAL_ICONS[selectedMealData?.id] || Sparkles;
+  const isSelectedMealDone = selectedMealData && selections[selectedMealData.id] !== undefined;
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] pb-28 flex flex-col font-sans text-stone-800 select-none">
@@ -307,7 +287,7 @@ export default function App() {
             </div>
             <div className="w-full h-1.5 bg-rose-200/50 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-linear-to-r from-rose-400 to-rose-600 rounded-full transition-all duration-500"
+                className="h-full bg-gradient-to-r from-rose-400 to-rose-600 rounded-full transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -324,7 +304,7 @@ export default function App() {
       <main className="p-4 space-y-4 flex-1">
         
         {/* Hatırlatıcı Kurallar Kartı */}
-        <div className="bg-linear-to-br from-amber-50/70 to-orange-50/50 border border-amber-200/60 rounded-3xl p-4 shadow-xs">
+        <div className="bg-gradient-to-br from-amber-50/80 to-orange-50/60 border border-amber-200/60 rounded-3xl p-4 shadow-xs">
           <div className="flex items-center gap-2 text-amber-800 font-bold text-xs uppercase tracking-wider mb-2">
             <div className="p-1 bg-amber-200/50 rounded-lg text-amber-700">
               <HeartHandshake size={14} />
@@ -341,77 +321,69 @@ export default function App() {
           </ul>
         </div>
 
-        {/* Öğün Listesi */}
-        {dietConfig.meals.map((meal) => {
-          const selectedIdx = selections[meal.id];
-          const MealIcon = MEAL_ICONS[meal.id] || Sparkles;
-          const isDone = selectedIdx !== undefined;
-
-          return (
-            <section 
-              key={meal.id} 
-              id={meal.id}
-              className={`scroll-mt-36 bg-white rounded-3xl p-4 border transition-all duration-300 shadow-xs ${
-                isDone ? "border-rose-200 shadow-rose-950/5" : "border-stone-200/60"
-              }`}
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-colors ${
-                    isDone ? "bg-rose-500 text-white" : "bg-stone-100 text-stone-500"
-                  }`}>
-                    <MealIcon size={18} />
-                  </div>
-                  <div>
-                    <h2 className="font-extrabold text-stone-800 text-sm tracking-tight">{meal.title}</h2>
-                    {meal.note && <p className="text-[11px] text-stone-400 leading-tight">{meal.note}</p>}
-                  </div>
+        {/* Sadece Seçili Olan Tek Öğün Görünür */}
+        {selectedMealData && (
+          <section 
+            className={`bg-white rounded-3xl p-4 border transition-all duration-300 shadow-xs animate-in fade-in zoom-in-95 ${
+              isSelectedMealDone ? "border-rose-200 shadow-rose-950/5" : "border-stone-200/60"
+            }`}
+          >
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-colors ${
+                  isSelectedMealDone ? "bg-rose-500 text-white" : "bg-stone-100 text-stone-500"
+                }`}>
+                  {React.createElement(selectedMealIcon, { size: 18 })}
                 </div>
+                <div>
+                  <h2 className="font-extrabold text-stone-800 text-sm tracking-tight">{selectedMealData.title}</h2>
+                  {selectedMealData.note && <p className="text-[11px] text-stone-400 leading-tight">{selectedMealData.note}</p>}
+                </div>
+              </div>
 
-                {meal.image && (
-                  <button
-                    onClick={() => setPreviewImage(meal.image)}
-                    className="flex items-center gap-1 bg-stone-50 hover:bg-stone-100 text-stone-600 border border-stone-200/70 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl transition-colors active:scale-95"
+              {selectedMealData.image && (
+                <button
+                  onClick={() => setPreviewImage(selectedMealData.image)}
+                  className="flex items-center gap-1 bg-stone-50 hover:bg-stone-100 text-stone-600 border border-stone-200/70 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl transition-colors active:scale-95"
+                >
+                  <Camera size={13} className="text-rose-500" />
+                  <span>Örnek</span>
+                </button>
+              )}
+            </div>
+
+            {/* Seçenekler */}
+            <div className="space-y-2.5 pt-1">
+              {selectedMealData.options.map((opt, idx) => {
+                const isSelected = selections[selectedMealData.id] === idx;
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => handleSelect(selectedMealData.id, idx)}
+                    className={`cursor-pointer text-xs p-3.5 rounded-2xl border transition-all duration-200 flex items-start gap-3 ${
+                      isSelected
+                        ? "bg-rose-50/90 border-rose-300 text-rose-950 font-semibold shadow-xs"
+                        : "bg-[#FAF7F5]/50 border-stone-100 text-stone-600 hover:bg-stone-50"
+                    }`}
                   >
-                    <Camera size={13} className="text-rose-500" />
-                    <span>Örnek</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Seçenekler */}
-              <div className="space-y-2">
-                {meal.options.map((opt, idx) => {
-                  const isSelected = selectedIdx === idx;
-                  return (
-                    <div
-                      key={idx}
-                      onClick={() => handleSelect(meal.id, idx)}
-                      className={`cursor-pointer text-xs p-3 rounded-2xl border transition-all duration-200 flex items-start gap-3 ${
-                        isSelected
-                          ? "bg-rose-50/90 border-rose-300 text-rose-950 font-semibold shadow-xs"
-                          : "bg-[#FAF7F5]/50 border-stone-100 text-stone-600 hover:bg-stone-50"
-                      }`}
-                    >
-                      <div className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 transition-all ${
-                        isSelected 
-                          ? "border-rose-500 bg-rose-500 text-white shadow-xs" 
-                          : "border-stone-300 bg-white"
-                      }`}>
-                        {isSelected && <Check size={11} strokeWidth={3} />}
-                      </div>
-                      <span className="leading-snug">{opt}</span>
+                    <div className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 transition-all ${
+                      isSelected 
+                        ? "border-rose-500 bg-rose-500 text-white shadow-xs" 
+                        : "border-stone-300 bg-white"
+                    }`}>
+                      {isSelected && <Check size={11} strokeWidth={3} />}
                     </div>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
+                    <span className="leading-snug">{opt}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </main>
 
-      {/* Alt Yüzen Menü (Floating Glass Dock) */}
-      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/85 backdrop-blur-lg border border-rose-100/90 shadow-xl shadow-rose-950/10 rounded-3xl p-1.5 flex items-center justify-around z-40">
+      {/* Alt Sabit Menü */}
+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/90 backdrop-blur-md border border-rose-100/90 shadow-xl shadow-rose-950/10 rounded-3xl p-1.5 flex items-center justify-around z-40">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeMeal === item.id;
@@ -420,22 +392,22 @@ export default function App() {
           return (
             <button
               key={item.id}
-              onClick={() => scrollToMeal(item.id)}
-              className={`relative flex flex-col items-center justify-center py-2 px-3.5 rounded-2xl transition-all duration-300 active:scale-90 ${
+              onClick={() => setActiveMeal(item.id)}
+              className={`relative flex flex-col items-center justify-center py-2 px-4 rounded-2xl transition-all duration-200 active:scale-95 ${
                 isActive 
-                  ? "bg-linear-to-b from-rose-500 to-rose-600 text-white shadow-md shadow-rose-500/25" 
+                  ? "bg-rose-500 text-white shadow-md shadow-rose-500/30" 
                   : "text-stone-500 hover:text-stone-800 hover:bg-stone-50"
               }`}
             >
               <div className="relative">
-                <Icon size={17} strokeWidth={isActive ? 2.5 : 2} />
+                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
                 {isDone && (
                   <span className={`absolute -top-1 -right-1.5 w-2 h-2 rounded-full ring-2 ${
-                    isActive ? "bg-emerald-300 ring-rose-600" : "bg-emerald-500 ring-white"
+                    isActive ? "bg-emerald-300 ring-rose-500" : "bg-emerald-500 ring-white"
                   }`} />
                 )}
               </div>
-              <span className={`text-[10px] tracking-tight mt-1 font-bold ${
+              <span className={`text-[11px] tracking-tight mt-1 font-bold ${
                 isActive ? "text-white" : "text-stone-600"
               }`}>
                 {item.label}
