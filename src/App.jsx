@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { auth, db, ADMIN_UID } from "./firebase";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { 
@@ -11,7 +11,7 @@ import { tr } from "date-fns/locale";
 import { 
   ChevronLeft, ChevronRight, Sparkles, LogOut, 
   Check, Settings, Camera, X, Sun, Moon, Coffee, BookOpen, Ban, Scale, 
-  TrendingDown, Plus, Trash2, Heart, Quote 
+  TrendingDown, Plus, Trash2, Heart 
 } from "lucide-react";
 
 const START_WEIGHT = 102.0;
@@ -81,10 +81,11 @@ export default function App() {
 
   // Sürpriz Aşk Notu: 'hidden' | 'wandering' | 'docked'
   const [heartMode, setHeartMode] = useState("hidden");
-  const [floatingPos, setFloatingPos] = useState({ x: 120, y: 220 });
   const [showLetterModal, setShowLetterModal] = useState(false);
   const [currentLoveNote, setCurrentLoveNote] = useState("");
-  const [hasSeenToday, setHasSeenToday] = useState(false);
+
+  const heartRef = useRef(null);
+  const animFrameRef = useRef(null);
 
   // Karanlık Mod
   const [isDark, setIsDark] = useState(() => {
@@ -185,7 +186,7 @@ export default function App() {
     return () => unsubscribe();
   }, [user]);
 
-  // Sayfa Her Açıldığında/Yenilendiğinde 5 Saniye Sonra Kalbi Uçur
+  // Sayfa Her Açıldığında 5 Saniye Sonra Kalbi Başlat
   useEffect(() => {
     if (!user || !isWife) return;
 
@@ -196,26 +197,65 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [user, isWife]);
 
-  // Kalbin Ekranda Rastgele Akıcı Gezinmesi
+  // 1. DÜZENLEME: Kesintisiz Süzülen ve Duvarlardan Seken Kalp Motoru (60 FPS)
   useEffect(() => {
     if (heartMode !== "wandering") return;
 
-    const moveRandomly = () => {
+    let x = Math.random() * (window.innerWidth - 90) + 20;
+    let y = Math.random() * (window.innerHeight - 260) + 80;
+    
+    // Sürekli hareket hızı ve rastgele başlangıç açısı
+    const speed = 1.6;
+    const angle = Math.random() * 2 * Math.PI;
+    let vx = Math.cos(angle) * speed;
+    let vy = Math.sin(angle) * speed;
+    if (Math.abs(vx) < 0.7) vx = vx < 0 ? -1.0 : 1.0;
+    if (Math.abs(vy) < 0.7) vy = vy < 0 ? -1.0 : 1.0;
+
+    const heartSize = 52;
+
+    const loop = () => {
       const screenW = window.innerWidth;
       const screenH = window.innerHeight;
 
-      const safeMaxX = Math.max(screenW - 80, 100);
-      const safeMaxY = Math.max(screenH - 180, 150);
+      const minX = 12;
+      const maxX = screenW - heartSize - 12;
+      const minY = 65;
+      const maxY = screenH - heartSize - 75;
 
-      const nextX = Math.floor(Math.random() * (safeMaxX - 30)) + 20;
-      const nextY = Math.floor(Math.random() * (safeMaxY - 100)) + 70;
+      x += vx;
+      y += vy;
 
-      setFloatingPos({ x: nextX, y: nextY });
+      // Sol ve sağ duvardan sekme
+      if (x <= minX) {
+        x = minX;
+        vx = -vx;
+      } else if (x >= maxX) {
+        x = maxX;
+        vx = -vx;
+      }
+
+      // Üst ve alt duvardan sekme
+      if (y <= minY) {
+        y = minY;
+        vy = -vy;
+      } else if (y >= maxY) {
+        y = maxY;
+        vy = -vy;
+      }
+
+      if (heartRef.current) {
+        heartRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      }
+
+      animFrameRef.current = requestAnimationFrame(loop);
     };
 
-    moveRandomly();
-    const interval = setInterval(moveRandomly, 3800);
-    return () => clearInterval(interval);
+    animFrameRef.current = requestAnimationFrame(loop);
+
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
   }, [heartMode]);
 
   // Kalbe Tıklandığında Notu Aç ve Menü Üzerine Sabitle
@@ -230,11 +270,9 @@ export default function App() {
 
       let noteToShow = "";
 
-      // Eğer bugün zaten bir not belirlendiyse aynı gün tekrar açıldığında o notu koru
       if (data.lastSeenDate === todayKey && data.todayNote) {
         noteToShow = data.todayNote;
       } else {
-        // Bugün ilk kez açılıyorsa sıradaki notu çek
         let availableIndices = notes.map((_, idx) => idx).filter((idx) => !seenIndices.includes(idx));
         let nextIndex;
         let nextSeen;
@@ -258,8 +296,7 @@ export default function App() {
       }
 
       setCurrentLoveNote(noteToShow);
-      setHasSeenToday(true);
-      setHeartMode("docked"); // Mektup kapansa bile artık alt menüde sabit kalır
+      setHeartMode("docked");
       setShowLetterModal(true);
 
     } catch (err) {
@@ -408,7 +445,7 @@ export default function App() {
   const isSelectedMealDone = selectedMealData && selections[selectedMealData.id] !== undefined;
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] pb-28 flex flex-col font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden">
+    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] pb-4 flex flex-col font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden">
       
       {/* Özel Animasyonlar */}
       <style>{`
@@ -423,7 +460,7 @@ export default function App() {
           }
         }
         .animate-letter-open {
-          animation: letterUnfold 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: letterUnfold 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
       `}</style>
 
@@ -840,100 +877,14 @@ export default function App() {
         )}
       </main>
 
-      {/* 5. EKRANDA YAVAŞÇA GEZİNEN UÇAN KALP */}
-      {heartMode === "wandering" && (
-        <div 
-          onClick={handleHeartClick}
-          style={{
-            transform: `translate3d(${floatingPos.x}px, ${floatingPos.y}px, 0)`,
-            transition: "transform 3.8s cubic-bezier(0.25, 1, 0.5, 1)",
-          }}
-          className="fixed top-0 left-0 z-50 cursor-pointer select-none active:scale-90"
-          title="Sana bir sürpriz var! Dokun"
-        >
-          <div className="relative group">
-            <div className="absolute -inset-2.5 bg-rose-400/30 rounded-full blur-md animate-pulse" />
-            <div className="w-13 h-13 bg-gradient-to-tr from-rose-500 to-pink-400 text-white rounded-full flex items-center justify-center shadow-xl shadow-rose-500/40 border-2 border-white/90">
-              <Heart size={26} className="fill-white animate-pulse" />
-            </div>
-            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-rose-500"></span>
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* 6. ZARİF MEKTUP MODALI */}
-      {showLetterModal && (
-        <div 
-          className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in duration-200"
-          onClick={() => setShowLetterModal(false)}
-        >
-          <div 
-            className="animate-letter-open bg-[#FAF7F5] dark:bg-[#1E1917] rounded-3xl max-w-sm w-full p-6 pt-10 shadow-2xl border border-rose-200/80 dark:border-stone-800 relative text-center space-y-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Üstte Mühür Gibi Duran Küçük Mektup İkonu */}
-            <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-              <div className="w-16 h-16 rounded-2xl bg-white dark:bg-[#282220] p-1.5 shadow-lg shadow-rose-500/20 border-2 border-rose-200 dark:border-stone-700 flex items-center justify-center">
-                <img 
-                  src={`${import.meta.env.BASE_URL}images/love-letter.webp`} 
-                  alt="Mektup Mührü"
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Kapat Butonu */}
-            <button
-              onClick={() => setShowLetterModal(false)}
-              className="absolute top-3.5 right-3.5 w-7 h-7 bg-white dark:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors shadow-2xs"
-            >
-              <X size={15} />
-            </button>
-
-            {/* Başlık */}
-            <div className="pt-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500 dark:text-rose-400 block mb-1">
-                Kalbimden Sana...
-              </span>
-              <h3 className="text-base font-extrabold text-stone-800 dark:text-stone-100 tracking-tight">
-                Günün Sevgi Notu ✨
-              </h3>
-            </div>
-
-            {/* Genişletilmiş Mektup Sayfası */}
-            <div className="relative bg-white dark:bg-[#26201D] border border-stone-200/70 dark:border-stone-800 rounded-2xl p-6 shadow-sm min-h-[140px] flex flex-col items-center justify-center">
-              <Quote size={24} className="text-rose-200 dark:text-rose-950/60 mb-2 rotate-180" />
-              <p className="text-sm sm:text-base text-stone-800 dark:text-stone-100 leading-relaxed font-serif italic text-center">
-                {currentLoveNote}
-              </p>
-              <Quote size={24} className="text-rose-200 dark:text-rose-950/60 mt-2 self-end" />
-            </div>
-
-            {/* Kapatma Butonu */}
-            <button
-              onClick={() => setShowLetterModal(false)}
-              className="w-full bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-2xl text-xs font-bold shadow-xs shadow-rose-500/25 transition-all active:scale-[0.98]"
-            >
-              Gülümse ve Devam Et 🌸
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 7. ALT 4'LÜ MENÜ VE MENÜYE DOKUNMUŞ SABİT KALP */}
-      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around z-40 transition-colors duration-300 relative">
+      {/* 3. DÜZENLEME: SAYFAYLA BİRLİKTE AKAN ALT MENÜ (SABİT DEĞİL) */}
+      <nav className="w-[calc(100%-2.5rem)] max-w-sm mx-auto bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around z-30 transition-colors duration-300 relative mt-5 mb-6 shrink-0">
         
-        {/* SABİT KALP: Okunduktan sonra Sabah ile Öğle arasına, menünün tam üst sınırına oturur */}
+        {/* 2. DÜZENLEME: SABİTLENEN KALP TAM ÖĞLE İLE ARA ARASINDA (left-1/2) */}
         {heartMode === "docked" && (
           <button
             onClick={handleHeartClick}
-            className="absolute -top-3.5 left-[26%] -translate-x-1/2 w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md shadow-rose-500/40 border-2 border-white dark:border-[#231F1E] active:scale-90 transition-transform z-50 animate-in zoom-in-75 duration-300 group"
+            className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md shadow-rose-500/40 border-2 border-white dark:border-[#231F1E] active:scale-90 transition-transform z-40 animate-in zoom-in-75 duration-300 group"
             title="Günün Sevgi Notunu Yeniden Aç"
           >
             <Heart size={13} className="fill-white group-hover:scale-110 transition-transform" />
@@ -972,6 +923,87 @@ export default function App() {
           );
         })}
       </nav>
+
+      {/* 1. DÜZENLEME DOM: SÜREKLİ SÜZÜLEN UÇAN KALP */}
+      {heartMode === "wandering" && (
+        <div 
+          ref={heartRef}
+          onClick={handleHeartClick}
+          className="fixed top-0 left-0 z-50 cursor-pointer select-none active:scale-90 will-change-transform"
+          title="Sana bir sürpriz var! Dokun"
+        >
+          <div className="relative group">
+            <div className="absolute -inset-2.5 bg-rose-400/30 rounded-full blur-md animate-pulse" />
+            <div className="w-13 h-13 bg-gradient-to-tr from-rose-500 to-pink-400 text-white rounded-full flex items-center justify-center shadow-xl shadow-rose-500/40 border-2 border-white/90">
+              <Heart size={26} className="fill-white animate-pulse" />
+            </div>
+            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-rose-500"></span>
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* 4. DÜZENLEME: ŞIK VE SADE AŞK MEKTUBU MODALI (Karanlık Modla Uyumlu) */}
+      {showLetterModal && (
+        <div 
+          className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in duration-200"
+          onClick={() => setShowLetterModal(false)}
+        >
+          <div 
+            className="animate-letter-open bg-[#FAF7F5] dark:bg-[#1E1917] rounded-3xl max-w-sm w-full p-6 pt-10 shadow-2xl border border-rose-200/80 dark:border-stone-800 relative text-center space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Üst Mühür */}
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2">
+              <div className="w-16 h-16 rounded-2xl bg-white dark:bg-[#282220] p-1.5 shadow-lg shadow-rose-500/20 border-2 border-rose-200 dark:border-stone-700 flex items-center justify-center">
+                <img 
+                  src={`${import.meta.env.BASE_URL}images/love-letter.webp`} 
+                  alt="Mektup Mührü"
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Kapat */}
+            <button
+              onClick={() => setShowLetterModal(false)}
+              className="absolute top-3.5 right-3.5 w-7 h-7 bg-white dark:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors shadow-2xs"
+            >
+              <X size={15} />
+            </button>
+
+            {/* Başlık */}
+            <div className="pt-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500 dark:text-rose-400 block mb-1">
+                Kalbimden Sana...
+              </span>
+              <h3 className="text-base font-extrabold text-stone-800 dark:text-stone-100 tracking-tight">
+                Günün Sevgi Notu ✨
+              </h3>
+            </div>
+
+            {/* Temiz & Zarif Not Sayfası (Karanlık Mod Kusursuz) */}
+            <div className="bg-white dark:bg-[#181514] border border-rose-100 dark:border-stone-800 rounded-2xl p-6 shadow-2xs min-h-[120px] flex items-center justify-center">
+              <p className="text-sm sm:text-base text-stone-800 dark:text-stone-100 leading-relaxed font-serif italic text-center px-1">
+                “{currentLoveNote}”
+              </p>
+            </div>
+
+            {/* Devam Et Butonu */}
+            <button
+              onClick={() => setShowLetterModal(false)}
+              className="w-full bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-2xl text-xs font-bold shadow-xs shadow-rose-500/25 transition-all active:scale-[0.98]"
+            >
+              Gülümse ve Devam Et 🌸
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Admin Panel Modal */}
       {isAdminOpen && (
