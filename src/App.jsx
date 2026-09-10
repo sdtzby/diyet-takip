@@ -11,7 +11,7 @@ import { tr } from "date-fns/locale";
 import { 
   ChevronLeft, ChevronRight, Sparkles, LogOut, 
   Check, Settings, Camera, X, Sun, Moon, Coffee, BookOpen, Ban, Scale, 
-  TrendingDown, Plus, Trash2, Heart 
+  TrendingDown, Plus, Trash2, Heart, Quote 
 } from "lucide-react";
 
 const START_WEIGHT = 102.0;
@@ -79,7 +79,7 @@ export default function App() {
   const [inputDate, setInputDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [savingWeight, setSavingWeight] = useState(false);
 
-  // Sürpriz Aşk Notu Durumları: 'hidden' | 'wandering' | 'docked'
+  // Sürpriz Aşk Notu: 'hidden' | 'wandering' | 'docked'
   const [heartMode, setHeartMode] = useState("hidden");
   const [floatingPos, setFloatingPos] = useState({ x: 120, y: 220 });
   const [showLetterModal, setShowLetterModal] = useState(false);
@@ -185,48 +185,25 @@ export default function App() {
     return () => unsubscribe();
   }, [user]);
 
-  // Aşk Notu Durum Kontrolü
+  // Sayfa Her Açıldığında/Yenilendiğinde 5 Saniye Sonra Kalbi Uçur
   useEffect(() => {
     if (!user || !isWife) return;
 
-    let timer;
-    const checkLoveNoteStatus = async () => {
-      try {
-        const metaRef = doc(db, "logs", user.uid, "meta", "love_state");
-        const metaSnap = await getDoc(metaRef);
-        const data = metaSnap.exists() ? metaSnap.data() : {};
+    const timer = setTimeout(() => {
+      setHeartMode("wandering");
+    }, 5000);
 
-        // Bugün zaten okunduysa: Direkt sağ altta sabit göster
-        if (data.lastSeenDate === todayKey) {
-          setHasSeenToday(true);
-          setCurrentLoveNote(data.todayNote || DEFAULT_LOVE_NOTES[0]);
-          setHeartMode("docked");
-          return;
-        }
-
-        // Henüz okunmadıysa: 5 saniye sonra ekranda gezinmeye başlasın
-        setHasSeenToday(false);
-        timer = setTimeout(() => {
-          setHeartMode("wandering");
-        }, 5000);
-      } catch (err) {
-        console.error("Aşk notu durumu çekilemedi:", err);
-      }
-    };
-
-    checkLoveNoteStatus();
     return () => clearTimeout(timer);
-  }, [user, isWife, todayKey]);
+  }, [user, isWife]);
 
-  // Kalp 'wandering' modundayken ekranda yavaşça rastgele dolaşması
+  // Kalbin Ekranda Rastgele Akıcı Gezinmesi
   useEffect(() => {
     if (heartMode !== "wandering") return;
 
     const moveRandomly = () => {
       const screenW = window.innerWidth;
       const screenH = window.innerHeight;
-      
-      // Kenarlara taşmaması için güvenli sınırlar
+
       const safeMaxX = Math.max(screenW - 80, 100);
       const safeMaxY = Math.max(screenH - 180, 150);
 
@@ -237,18 +214,12 @@ export default function App() {
     };
 
     moveRandomly();
-    const interval = setInterval(moveRandomly, 3600); // 3.6 saniyede bir yeni koordinata süzül
+    const interval = setInterval(moveRandomly, 3800);
     return () => clearInterval(interval);
   }, [heartMode]);
 
-  // Kalbe Tıklandığında Notu Aç ve Sabitle
+  // Kalbe Tıklandığında Notu Aç ve Menü Üzerine Sabitle
   const handleHeartClick = async () => {
-    // Eğer bugün zaten görüldüyse direkt mevcut notu aç
-    if (hasSeenToday && currentLoveNote) {
-      setShowLetterModal(true);
-      return;
-    }
-
     try {
       const metaRef = doc(db, "logs", user.uid, "meta", "love_state");
       const metaSnap = await getDoc(metaRef);
@@ -257,39 +228,45 @@ export default function App() {
       const notes = dietConfig.loveNotes?.length > 0 ? dietConfig.loveNotes : DEFAULT_LOVE_NOTES;
       const seenIndices = Array.isArray(data.seenIndices) ? data.seenIndices : [];
 
-      let availableIndices = notes.map((_, idx) => idx).filter((idx) => !seenIndices.includes(idx));
+      let noteToShow = "";
 
-      let nextIndex;
-      let nextSeen;
-
-      // Liste bittiyse başa dön
-      if (availableIndices.length === 0) {
-        nextIndex = 0;
-        nextSeen = [0];
+      // Eğer bugün zaten bir not belirlendiyse aynı gün tekrar açıldığında o notu koru
+      if (data.lastSeenDate === todayKey && data.todayNote) {
+        noteToShow = data.todayNote;
       } else {
-        nextIndex = availableIndices[0];
-        nextSeen = [...seenIndices, nextIndex];
+        // Bugün ilk kez açılıyorsa sıradaki notu çek
+        let availableIndices = notes.map((_, idx) => idx).filter((idx) => !seenIndices.includes(idx));
+        let nextIndex;
+        let nextSeen;
+
+        if (availableIndices.length === 0) {
+          nextIndex = 0;
+          nextSeen = [0];
+        } else {
+          nextIndex = availableIndices[0];
+          nextSeen = [...seenIndices, nextIndex];
+        }
+
+        noteToShow = notes[nextIndex];
+
+        await setDoc(metaRef, {
+          lastSeenDate: todayKey,
+          todayNote: noteToShow,
+          seenIndices: nextSeen,
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
       }
 
-      const noteToShow = notes[nextIndex];
       setCurrentLoveNote(noteToShow);
       setHasSeenToday(true);
+      setHeartMode("docked"); // Mektup kapansa bile artık alt menüde sabit kalır
       setShowLetterModal(true);
-      setHeartMode("docked"); // Artık sağ altta sabitlensin
-
-      await setDoc(metaRef, {
-        lastSeenDate: todayKey,
-        todayNote: noteToShow,
-        seenIndices: nextSeen,
-        updatedAt: new Date().toISOString(),
-      }, { merge: true });
 
     } catch (err) {
       console.error("Not yüklenemedi:", err);
       setCurrentLoveNote("Seni çok seviyorum canım eşim! ❤️");
-      setHasSeenToday(true);
-      setShowLetterModal(true);
       setHeartMode("docked");
+      setShowLetterModal(true);
     }
   };
 
@@ -433,6 +410,23 @@ export default function App() {
   return (
     <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] pb-28 flex flex-col font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden">
       
+      {/* Özel Animasyonlar */}
+      <style>{`
+        @keyframes letterUnfold {
+          0% {
+            opacity: 0;
+            transform: translateY(32px) scale(0.92);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        .animate-letter-open {
+          animation: letterUnfold 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+
       {/* Minimalist Üst Bar */}
       <header className="px-6 pt-7 pb-3 bg-[#FAF7F5] dark:bg-[#181514] transition-colors duration-300">
         <div className="flex items-center justify-between text-stone-400 dark:text-stone-500 mb-3">
@@ -852,7 +846,7 @@ export default function App() {
           onClick={handleHeartClick}
           style={{
             transform: `translate3d(${floatingPos.x}px, ${floatingPos.y}px, 0)`,
-            transition: "transform 3.5s cubic-bezier(0.25, 1, 0.5, 1)",
+            transition: "transform 3.8s cubic-bezier(0.25, 1, 0.5, 1)",
           }}
           className="fixed top-0 left-0 z-50 cursor-pointer select-none active:scale-90"
           title="Sana bir sürpriz var! Dokun"
@@ -870,89 +864,82 @@ export default function App() {
         </div>
       )}
 
-      {/* 6. NOT GÖRÜLDÜKTEN SONRA SAĞ ALTA SABİTLENMİŞ KALP */}
-      {heartMode === "docked" && (
-        <div 
-          onClick={handleHeartClick}
-          className="fixed bottom-22 right-5 z-40 cursor-pointer select-none active:scale-95 transition-all duration-300 animate-in fade-in"
-          title="Bugünün Sevgi Notu"
-        >
-          <div className="relative">
-            <div className="w-11 h-11 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-lg shadow-rose-500/35 border-2 border-white dark:border-[#231F1E]">
-              <Heart size={20} className="fill-white" />
-            </div>
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 border-2 border-white dark:border-[#231F1E] rounded-full" />
-          </div>
-        </div>
-      )}
-
-      {/* 7. AŞK MEKTUBU MODALI */}
+      {/* 6. ZARİF MEKTUP MODALI */}
       {showLetterModal && (
         <div 
-          className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/75 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in zoom-in-95 duration-200"
+          className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in duration-200"
           onClick={() => setShowLetterModal(false)}
         >
           <div 
-            className="bg-white dark:bg-[#231F1E] rounded-3xl max-w-xs sm:max-w-sm w-full p-6 shadow-2xl border border-rose-100 dark:border-stone-800 relative text-center space-y-4"
+            className="animate-letter-open bg-[#FAF7F5] dark:bg-[#1E1917] rounded-3xl max-w-sm w-full p-6 pt-10 shadow-2xl border border-rose-200/80 dark:border-stone-800 relative text-center space-y-5"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Üstte Mühür Gibi Duran Küçük Mektup İkonu */}
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2">
+              <div className="w-16 h-16 rounded-2xl bg-white dark:bg-[#282220] p-1.5 shadow-lg shadow-rose-500/20 border-2 border-rose-200 dark:border-stone-700 flex items-center justify-center">
+                <img 
+                  src={`${import.meta.env.BASE_URL}images/love-letter.webp`} 
+                  alt="Mektup Mührü"
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </div>
+            </div>
+
             {/* Kapat Butonu */}
             <button
               onClick={() => setShowLetterModal(false)}
-              className="absolute top-4 right-4 w-7 h-7 bg-stone-100 dark:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors"
+              className="absolute top-3.5 right-3.5 w-7 h-7 bg-white dark:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors shadow-2xs"
             >
               <X size={15} />
             </button>
 
-            {/* Mektup Görseli */}
-            <div className="pt-2 flex justify-center">
-              <img 
-                src={`${import.meta.env.BASE_URL}images/love-letter.webp`} 
-                alt="Sevgi Mektubu"
-                className="w-36 h-36 object-contain drop-shadow-md animate-in zoom-in duration-300"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
-            </div>
-
-            {/* Başlık & Günlük Durum Rozeti */}
-            <div className="space-y-1">
-              {hasSeenToday ? (
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 px-3 py-1 rounded-full border border-rose-200/60 dark:border-rose-900/50 inline-block">
-                  Bugünün Notunu Gördün ✨
-                </span>
-              ) : (
-                <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500 dark:text-rose-400 block">
-                  Günün Sürprizi
-                </span>
-              )}
-
-              <h3 className="text-base font-extrabold text-stone-800 dark:text-stone-100 tracking-tight pt-1">
-                Sana Küçük Bir Notum Var 💌
+            {/* Başlık */}
+            <div className="pt-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500 dark:text-rose-400 block mb-1">
+                Kalbimden Sana...
+              </span>
+              <h3 className="text-base font-extrabold text-stone-800 dark:text-stone-100 tracking-tight">
+                Günün Sevgi Notu ✨
               </h3>
             </div>
 
-            {/* Sevgi Notu Metni */}
-            <div className="bg-[#FAF7F5] dark:bg-[#181514] border border-rose-100 dark:border-stone-800/80 rounded-2xl p-4 shadow-2xs">
-              <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-200 leading-relaxed italic font-serif">
-                "{currentLoveNote}"
+            {/* Genişletilmiş Mektup Sayfası */}
+            <div className="relative bg-white dark:bg-[#26201D] border border-stone-200/70 dark:border-stone-800 rounded-2xl p-6 shadow-sm min-h-[140px] flex flex-col items-center justify-center">
+              <Quote size={24} className="text-rose-200 dark:text-rose-950/60 mb-2 rotate-180" />
+              <p className="text-sm sm:text-base text-stone-800 dark:text-stone-100 leading-relaxed font-serif italic text-center">
+                {currentLoveNote}
               </p>
+              <Quote size={24} className="text-rose-200 dark:text-rose-950/60 mt-2 self-end" />
             </div>
 
-            {/* Kapat Butonu */}
+            {/* Kapatma Butonu */}
             <button
               onClick={() => setShowLetterModal(false)}
               className="w-full bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-2xl text-xs font-bold shadow-xs shadow-rose-500/25 transition-all active:scale-[0.98]"
             >
-              Gülümse ve Devam Et ✨
+              Gülümse ve Devam Et 🌸
             </button>
           </div>
         </div>
       )}
 
-      {/* Alt 4'lü Menü */}
-      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around z-40 transition-colors duration-300">
+      {/* 7. ALT 4'LÜ MENÜ VE MENÜYE DOKUNMUŞ SABİT KALP */}
+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around z-40 transition-colors duration-300 relative">
+        
+        {/* SABİT KALP: Okunduktan sonra Sabah ile Öğle arasına, menünün tam üst sınırına oturur */}
+        {heartMode === "docked" && (
+          <button
+            onClick={handleHeartClick}
+            className="absolute -top-3.5 left-[26%] -translate-x-1/2 w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md shadow-rose-500/40 border-2 border-white dark:border-[#231F1E] active:scale-90 transition-transform z-50 animate-in zoom-in-75 duration-300 group"
+            title="Günün Sevgi Notunu Yeniden Aç"
+          >
+            <Heart size={13} className="fill-white group-hover:scale-110 transition-transform" />
+          </button>
+        )}
+
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeMeal === item.id;
