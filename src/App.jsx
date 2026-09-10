@@ -79,15 +79,16 @@ export default function App() {
   const [inputDate, setInputDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [savingWeight, setSavingWeight] = useState(false);
 
-  // Sürpriz Aşk Notu
+  // Sürpriz Aşk Notu Durumları
   const [heartMode, setHeartMode] = useState("hidden");
   const [showLetterModal, setShowLetterModal] = useState(false);
   const [currentLoveNote, setCurrentLoveNote] = useState("");
+  const [hasSeenToday, setHasSeenToday] = useState(false);
 
   const heartRef = useRef(null);
   const animFrameRef = useRef(null);
 
-  // PWA ÖNBELLEK TEMİZLEYİCİ (Kodun cihaza kilitlenmesini engeller)
+  // PWA Önbellek Temizleyici
   useEffect(() => {
     if ('caches' in window) {
       caches.keys().then((names) => {
@@ -213,7 +214,7 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [user, isWife]);
 
-  // 1. DÜZENLEME: Çok Yavaş ve Kesintisiz Seken Kalp Animasyonu
+  // DÜZENLEME 1: Çok Yavaş ve Akıcı Fizik Motoru
   useEffect(() => {
     if (heartMode !== "wandering") return;
 
@@ -224,14 +225,14 @@ export default function App() {
     let x = Math.random() * (screenW - 100) + 20;
     let y = Math.random() * (screenH - 260) + 80;
 
-    // HIZI İYİCE DÜŞÜRDÜK: Saniyede 15 Piksel (Çok yavaş ve dinlendirici)
-    const speed = 15; 
+    // Hız 10'a düşürüldü: Ekranda çok narin süzülecek
+    const speed = 10;
     const angle = Math.random() * 2 * Math.PI;
     let vx = Math.cos(angle) * speed;
     let vy = Math.sin(angle) * speed;
 
-    if (Math.abs(vx) < 8) vx = vx < 0 ? -12 : 12;
-    if (Math.abs(vy) < 8) vy = vy < 0 ? -12 : 12;
+    if (Math.abs(vx) < 5) vx = vx < 0 ? -7 : 7;
+    if (Math.abs(vy) < 5) vy = vy < 0 ? -7 : 7;
 
     let lastTime = performance.now();
 
@@ -249,6 +250,7 @@ export default function App() {
       x += vx * dt;
       y += vy * dt;
 
+      // Sekme dinamikleri
       if (x <= minX) {
         x = minX;
         vx = Math.abs(vx);
@@ -292,6 +294,7 @@ export default function App() {
 
       if (data.lastSeenDate === todayKey && data.todayNote) {
         noteToShow = data.todayNote;
+        setHasSeenToday(true);
       } else {
         let availableIndices = notes.map((_, idx) => idx).filter((idx) => !seenIndices.includes(idx));
         let nextIndex;
@@ -306,6 +309,7 @@ export default function App() {
         }
 
         noteToShow = notes[nextIndex];
+        setHasSeenToday(false);
 
         await setDoc(metaRef, {
           lastSeenDate: todayKey,
@@ -463,27 +467,22 @@ export default function App() {
   const selectedMealIcon = MEAL_ICONS[selectedMealData?.id] || Sparkles;
   const isSelectedMealDone = selectedMealData && selections[selectedMealData.id] !== undefined;
 
+  // DÜZENLEME 2: Ana Kapsayıcıdan "min-h-screen" ve flex yapıları temizlendi. 
+  // Sadece doğal doküman akışına (block) bırakıldı.
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden pb-4">
+    <div className="max-w-md mx-auto bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 pb-12 overflow-x-hidden min-h-screen">
       
-      {/* Özel Animasyonlar */}
       <style>{`
         @keyframes letterUnfold {
-          0% {
-            opacity: 0;
-            transform: translateY(32px) scale(0.92);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
+          0% { opacity: 0; transform: translateY(32px) scale(0.92); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
         }
         .animate-letter-open {
           animation: letterUnfold 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
       `}</style>
 
-      {/* Minimalist Üst Bar */}
+      {/* Üst Bar */}
       <header className="px-6 pt-7 pb-3 bg-[#FAF7F5] dark:bg-[#181514] transition-colors duration-300">
         <div className="flex items-center justify-between text-stone-400 dark:text-stone-500 mb-3">
           <div className="flex items-center gap-2">
@@ -514,7 +513,6 @@ export default function App() {
                 <Settings size={16} />
               </button>
             )}
-
             <button 
               onClick={() => setIsDark(!isDark)} 
               className="text-stone-400 dark:text-stone-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors p-0.5"
@@ -522,7 +520,6 @@ export default function App() {
             >
               {isDark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-
             <button 
               onClick={() => signOut(auth)} 
               className="text-stone-400 dark:text-stone-500 hover:text-rose-600 transition-colors"
@@ -533,7 +530,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Selamlama ve İlerleme Noktaları */}
         <div className="flex items-center justify-between gap-2">
           <h1 className="text-lg font-light tracking-tight text-stone-800 dark:text-stone-100 truncate">
             {greeting.word},{" "}
@@ -556,8 +552,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Buton Grubu: Kilo + Yasaklar + Kurallar */}
-        <div className="mt-3 flex items-center justify-start gap-1.5">
+        {/* Buton Grubu ve DÜZENLEME 3: Sabitlenen Kalp Kurallar'ın Karşısında */}
+        <div className="mt-3 flex items-center justify-start gap-1.5 w-full relative">
           <button
             onClick={() => setActiveMeal("weight")}
             className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95 ${
@@ -593,13 +589,23 @@ export default function App() {
             <BookOpen size={11} className={activeMeal === "rules" ? "text-white" : "text-rose-400"} />
             <span>Kurallar</span>
           </button>
+
+          {/* Kalp tam burada sağa yaslanıyor (ml-auto) */}
+          {heartMode === "docked" && (
+            <button
+              onClick={handleHeartClick}
+              className="ml-auto flex items-center justify-center w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full shadow-md shadow-rose-500/30 border-2 border-[#FAF7F5] dark:border-[#181514] active:scale-90 transition-transform animate-in zoom-in"
+              title="Günün Sevgi Notunu Yeniden Aç"
+            >
+              <Heart size={13} className="fill-white" />
+            </button>
+          )}
         </div>
       </header>
 
-      {/* Ana İçerik Alanı */}
+      {/* Ana İçerik Kartları */}
       <main className="px-5 pt-2">
-        
-        {/* 1. KİLO TAKİBİ KARTI */}
+        {/* 1. KİLO TAKİBİ */}
         {activeMeal === "weight" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
             <div className="flex justify-between items-start">
@@ -625,9 +631,7 @@ export default function App() {
 
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-[#FAF7F5] dark:bg-[#181514] rounded-2xl p-2.5 text-center">
-                <span className="text-[9px] uppercase tracking-wider font-semibold text-stone-400 dark:text-stone-500 block">
-                  Toplam
-                </span>
+                <span className="text-[9px] uppercase tracking-wider font-semibold text-stone-400 dark:text-stone-500 block">Toplam</span>
                 <div className="my-0.5 text-rose-500 dark:text-rose-400 font-bold text-sm flex items-center justify-center gap-0.5">
                   <TrendingDown size={12} />
                   <span>{parseFloat(totalLost) > 0 ? `-${totalLost}` : "0.0"}</span>
@@ -636,9 +640,7 @@ export default function App() {
               </div>
 
               <div className="bg-[#FAF7F5] dark:bg-[#181514] rounded-2xl p-2.5 text-center">
-                <span className="text-[9px] uppercase tracking-wider font-semibold text-stone-400 dark:text-stone-500 block">
-                  Son Fark
-                </span>
+                <span className="text-[9px] uppercase tracking-wider font-semibold text-stone-400 dark:text-stone-500 block">Son Fark</span>
                 <div className="my-0.5 text-emerald-500 dark:text-emerald-400 font-bold text-sm">
                   {parseFloat(lastDiff) > 0 ? `-${lastDiff}` : parseFloat(lastDiff) < 0 ? `+${Math.abs(lastDiff)}` : "0.0"}
                 </div>
@@ -646,9 +648,7 @@ export default function App() {
               </div>
 
               <div className="bg-[#FAF7F5] dark:bg-[#181514] rounded-2xl p-2.5 text-center">
-                <span className="text-[9px] uppercase tracking-wider font-semibold text-stone-400 dark:text-stone-500 block">
-                  Son Tartı
-                </span>
+                <span className="text-[9px] uppercase tracking-wider font-semibold text-stone-400 dark:text-stone-500 block">Son Tartı</span>
                 <div className="my-0.5 text-stone-800 dark:text-stone-100 font-bold text-sm">
                   {currentWeight}
                 </div>
@@ -749,7 +749,7 @@ export default function App() {
           </section>
         )}
 
-        {/* 2. YASAKLAR KARTI */}
+        {/* 2. YASAKLAR */}
         {activeMeal === "forbidden" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800/80">
@@ -771,7 +771,6 @@ export default function App() {
             <div className="space-y-4">
               {(dietConfig.forbidden || DEFAULT_FORBIDDEN).map((group, gIdx) => {
                 const sortedItems = [...(group.items || [])].sort((a, b) => a.localeCompare(b, "tr"));
-
                 return (
                   <div key={gIdx} className="bg-[#FAF7F5]/70 dark:bg-[#1C1817]/60 border border-stone-200/60 dark:border-stone-800/70 rounded-2xl p-3.5 space-y-2.5">
                     <div className="flex items-center justify-between">
@@ -798,7 +797,7 @@ export default function App() {
           </section>
         )}
 
-        {/* 3. KURALLAR KARTI */}
+        {/* 3. KURALLAR */}
         {activeMeal === "rules" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800/80">
@@ -832,7 +831,7 @@ export default function App() {
           </section>
         )}
 
-        {/* 4. STANDART ÖĞÜNLER */}
+        {/* 4. ÖĞÜNLER */}
         {!["weight", "forbidden", "rules"].includes(activeMeal) && selectedMealData && (
           <section className={`bg-white dark:bg-[#231F1E] rounded-3xl p-5 border transition-all duration-200 shadow-2xs ${
             isSelectedMealDone ? "border-rose-200 dark:border-rose-900/50 shadow-rose-950/5" : "border-stone-100 dark:border-stone-800/80"
@@ -894,58 +893,47 @@ export default function App() {
             </div>
           </section>
         )}
-
-        {/* 5. ALT MENÜ: KARTIN HEMEN ALTINDA, DOĞAL SAYFA AKIŞINDA (KESİNLİKLE SABİT DEĞİL) */}
-        <div className="w-full pt-4 pb-2">
-          <nav className="w-full bg-white/95 dark:bg-[#231F1E]/95 border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around relative">
-            
-            {/* 2. DÜZENLEME: Sabit Kalp Tam Öğle İle Ara Arasında (left-1/2) */}
-            {heartMode === "docked" && (
-              <button
-                onClick={handleHeartClick}
-                className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md shadow-rose-500/40 border-[3px] border-[#FAF7F5] dark:border-[#181514] active:scale-90 transition-transform z-30 animate-in zoom-in-75 duration-300 group"
-                title="Günün Sevgi Notunu Yeniden Aç"
-              >
-                <Heart size={14} className="fill-white group-hover:scale-110 transition-transform" />
-              </button>
-            )}
-
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeMeal === item.id;
-              const isDone = selections[item.id] !== undefined;
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveMeal(item.id)}
-                  className={`relative flex flex-col items-center justify-center py-2 px-4 rounded-2xl transition-all duration-200 active:scale-95 ${
-                    isActive 
-                      ? "bg-rose-500 text-white shadow-sm shadow-rose-500/30" 
-                      : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
-                  }`}
-                >
-                  <div className="relative">
-                    <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                    {isDone && (
-                      <span className={`absolute -top-1 -right-1.5 w-2 h-2 rounded-full ring-2 ${
-                        isActive ? "bg-emerald-300 ring-rose-500" : "bg-emerald-500 ring-white dark:ring-[#231F1E]"
-                      }`} />
-                    )}
-                  </div>
-                  <span className={`text-[11px] tracking-tight mt-1 font-semibold ${
-                    isActive ? "text-white" : "text-stone-500 dark:text-stone-400"
-                  }`}>
-                    {item.label}
-                  </span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
       </main>
 
-      {/* 1. DÜZENLEME: YAVAŞ, AKICI VE KESİNTİSİZ SEKME YAPAN KALP */}
+      {/* DÜZENLEME 3: TAMAMEN DOĞAL AKIŞTA (SABİTLENMEMİŞ) ALT MENÜ */}
+      <div className="px-5 mt-6 mb-8">
+        <nav className="w-full max-w-sm mx-auto bg-white/95 dark:bg-[#231F1E]/95 border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around">
+          
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeMeal === item.id;
+            const isDone = selections[item.id] !== undefined;
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveMeal(item.id)}
+                className={`relative flex flex-col items-center justify-center py-2 px-4 rounded-2xl transition-all duration-200 active:scale-95 ${
+                  isActive 
+                    ? "bg-rose-500 text-white shadow-sm shadow-rose-500/30" 
+                    : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+                }`}
+              >
+                <div className="relative">
+                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                  {isDone && (
+                    <span className={`absolute -top-1 -right-1.5 w-2 h-2 rounded-full ring-2 ${
+                      isActive ? "bg-emerald-300 ring-rose-500" : "bg-emerald-500 ring-white dark:ring-[#231F1E]"
+                    }`} />
+                  )}
+                </div>
+                <span className={`text-[11px] tracking-tight mt-1 font-semibold ${
+                  isActive ? "text-white" : "text-stone-500 dark:text-stone-400"
+                }`}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* YAVAŞ, AKICI VE KESİNTİSİZ SEKME YAPAN KALP */}
       {heartMode === "wandering" && (
         <div 
           ref={heartRef}
@@ -966,7 +954,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 4. DÜZENLEME: ZARİF VE SADE MEKTUP MODALI */}
+      {/* ZARİF MEKTUP MODALI */}
       {showLetterModal && (
         <div 
           className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in duration-200"
@@ -990,7 +978,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Kapat */}
+            {/* Kapat Butonu */}
             <button
               onClick={() => setShowLetterModal(false)}
               className="absolute top-3.5 right-3.5 w-7 h-7 bg-white dark:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors shadow-2xs"
@@ -999,18 +987,24 @@ export default function App() {
             </button>
 
             {/* Başlık */}
-            <div className="pt-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500 dark:text-rose-400 block mb-1">
-                Kalbimden Sana...
-              </span>
-              <h3 className="text-base font-extrabold text-stone-800 dark:text-stone-100 tracking-tight">
-                Günün Sevgi Notu ✨
+            <div className="pt-2 space-y-1">
+              {hasSeenToday ? (
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 px-3 py-1 rounded-full border border-rose-200/60 dark:border-rose-900/50 inline-block">
+                  Bugünün Notunu Gördün ✨
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500 dark:text-rose-400 block mb-1">
+                  Kalbimden Sana...
+                </span>
+              )}
+              <h3 className="text-base font-extrabold text-stone-800 dark:text-stone-100 tracking-tight pt-1">
+                Günün Sevgi Notu
               </h3>
             </div>
 
-            {/* Şık Tipografik Not Alanı */}
-            <div className="relative bg-white dark:bg-[#231F1E] border border-rose-100/50 dark:border-stone-800/80 rounded-2xl p-6 shadow-xs min-h-[130px] flex items-center justify-center">
-              <p className="text-sm sm:text-base text-stone-700 dark:text-stone-300 leading-relaxed font-serif italic text-center">
+            {/* Mektup Sayfası */}
+            <div className="bg-white dark:bg-[#181514] border border-rose-100 dark:border-stone-800 rounded-2xl p-6 shadow-2xs min-h-[120px] flex items-center justify-center">
+              <p className="text-sm sm:text-base text-stone-800 dark:text-stone-100 leading-relaxed font-serif italic text-center px-1">
                 "{currentLoveNote}"
               </p>
             </div>
