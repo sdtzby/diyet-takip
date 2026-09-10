@@ -577,20 +577,22 @@ export default function App() {
           </section>
         )}
 
-        {/* 2. YASAKLAR KARTI (Modal yerine Doğrudan Kart) */}
+        {/* 2. YASAKLAR KARTI: 2 Sütunlu Dengeli ve Okunaklı Izgara Düzeni */}
         {activeMeal === "forbidden" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
-            <div className="flex items-center gap-3 pb-2 border-b border-stone-100 dark:border-stone-800/80">
-              <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center">
-                <Ban size={19} />
-              </div>
-              <div>
-                <h2 className="font-extrabold text-stone-800 dark:text-stone-100 text-base tracking-tight">
-                  Uzak Durulacaklar
-                </h2>
-                <p className="text-[11px] text-stone-400 dark:text-stone-500 leading-tight mt-0.5">
-                  Diyet sürecinde tüketilmemesi gereken gıdalar
-                </p>
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800/80">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center shrink-0">
+                  <Ban size={19} />
+                </div>
+                <div>
+                  <h2 className="font-extrabold text-stone-800 dark:text-stone-100 text-base tracking-tight">
+                    Uzak Durulacaklar
+                  </h2>
+                  <p className="text-[11px] text-stone-400 dark:text-stone-500 leading-tight mt-0.5">
+                    İyileşme ve kilo verme sürecini sekteye uğratan gıdalar
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -598,20 +600,27 @@ export default function App() {
               {(dietConfig.forbidden || DEFAULT_FORBIDDEN).map((group, gIdx) => (
                 <div 
                   key={gIdx} 
-                  className="bg-[#FAF7F5]/80 dark:bg-[#181514]/70 border border-stone-200/60 dark:border-stone-800/80 rounded-2xl p-3.5 space-y-2.5"
+                  className="bg-[#FAF7F5]/70 dark:bg-[#1C1817]/60 border border-stone-200/60 dark:border-stone-800/70 rounded-2xl p-3.5 space-y-2.5"
                 >
-                  <h3 className="font-bold text-rose-600 dark:text-rose-400 text-xs uppercase tracking-wide">
-                    {group.category}
-                  </h3>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-rose-600 dark:text-rose-400 text-xs tracking-wide">
+                      {group.category}
+                    </h3>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400">
+                      {group.items.length} ürün
+                    </span>
+                  </div>
+
+                  {/* 2 Sütunlu Okunaklı Ürün Izgarası */}
+                  <div className="grid grid-cols-2 gap-1.5">
                     {group.items.map((item, iIdx) => (
-                      <span
+                      <div
                         key={iIdx}
-                        className="inline-flex items-center gap-1.5 bg-white dark:bg-[#241F1D] border border-stone-200/80 dark:border-stone-700/70 text-stone-700 dark:text-stone-200 px-2.5 py-1 rounded-xl text-xs font-medium shadow-2xs"
+                        className="bg-white dark:bg-[#231F1E] border border-stone-200/70 dark:border-stone-800 px-2.5 py-2 rounded-xl text-xs text-stone-700 dark:text-stone-200 font-medium shadow-2xs flex items-center gap-2"
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-                        {item}
-                      </span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                        <span className="truncate">{item}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -620,34 +629,41 @@ export default function App() {
           </section>
         )}
 
-        {/* 3. KURALLAR KARTI (Modal yerine Doğrudan Kart) */}
+        {/* 3. KURALLAR KARTI: Numaralı, Geniş Satır Aralıklı Mikro-Kartlar */}
         {activeMeal === "rules" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
-            <div className="flex items-center gap-3 pb-2 border-b border-stone-100 dark:border-stone-800/80">
-              <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center">
-                <BookOpen size={19} />
-              </div>
-              <div>
-                <h2 className="font-extrabold text-stone-800 dark:text-stone-100 text-base tracking-tight">
-                  Diyet Prensipleri
-                </h2>
-                <p className="text-[11px] text-stone-400 dark:text-stone-500 leading-tight mt-0.5">
-                  Beslenme düzeninde dikkat edilmesi gereken kurallar
-                </p>
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800/80">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center shrink-0">
+                  <BookOpen size={19} />
+                </div>
+                <div>
+                  <h2 className="font-extrabold text-stone-800 dark:text-stone-100 text-base tracking-tight">
+                    Diyet Prensipleri
+                  </h2>
+                  <p className="text-[11px] text-stone-400 dark:text-stone-500 leading-tight mt-0.5">
+                    Mide sağlığını korumak ve kalıcı kilo vermek için temel kurallar
+                  </p>
+                </div>
               </div>
             </div>
 
-            <ul className="text-xs text-stone-700 dark:text-stone-300 space-y-2.5">
+            {/* Numaralandırılmış Okunaklı Liste */}
+            <div className="space-y-2.5">
               {dietConfig.warnings.map((w, idx) => (
-                <li 
+                <div 
                   key={idx} 
-                  className="bg-[#FAF7F5]/80 dark:bg-[#181514]/70 border border-stone-100 dark:border-stone-800/80 rounded-2xl p-3.5 flex items-start gap-3 leading-relaxed"
+                  className="bg-[#FAF7F5]/70 dark:bg-[#1C1817]/60 border border-stone-100 dark:border-stone-800/80 rounded-2xl p-3.5 flex items-start gap-3 transition-all hover:border-stone-200 dark:hover:border-stone-700"
                 >
-                  <span className="w-2 h-2 rounded-full bg-rose-500 mt-1.5 shrink-0" />
-                  <span>{w}</span>
-                </li>
+                  <span className="w-6 h-6 rounded-xl bg-white dark:bg-[#231F1E] border border-rose-200/80 dark:border-rose-900/50 text-rose-500 dark:text-rose-400 text-[11px] font-bold flex items-center justify-center shrink-0 shadow-2xs">
+                    {idx + 1}
+                  </span>
+                  <p className="text-xs text-stone-700 dark:text-stone-200 leading-relaxed font-normal pt-0.5">
+                    {w}
+                  </p>
+                </div>
               ))}
-            </ul>
+            </div>
           </section>
         )}
 
