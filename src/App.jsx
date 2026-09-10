@@ -79,7 +79,7 @@ export default function App() {
   const [inputDate, setInputDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [savingWeight, setSavingWeight] = useState(false);
 
-  // Sürpriz Aşk Notu
+  // Sürpriz Aşk Notu Modları: hidden | wandering | docked
   const [heartMode, setHeartMode] = useState("hidden");
   const [showLetterModal, setShowLetterModal] = useState(false);
   const [currentLoveNote, setCurrentLoveNote] = useState("");
@@ -88,7 +88,7 @@ export default function App() {
   const heartRef = useRef(null);
   const animFrameRef = useRef(null);
 
-  // PWA Önbellek Temizleyici
+  // PWA Önbellek Zorla Silici
   useEffect(() => {
     if ('caches' in window) {
       caches.keys().then((names) => {
@@ -201,13 +201,14 @@ export default function App() {
     if (!user || !isWife) return;
 
     const timer = setTimeout(() => {
-      setHeartMode("wandering");
+      // Zaten docked durumundaysa hiç başlatma
+      setHeartMode((prev) => (prev === "docked" ? "docked" : "wandering"));
     }, 5000);
 
     return () => clearTimeout(timer);
   }, [user, isWife]);
 
-  // Çok Yavaş ve Akıcı Seken Kalp Motoru
+  // Kalp Süzülme Motoru
   useEffect(() => {
     if (heartMode !== "wandering") return;
 
@@ -218,13 +219,13 @@ export default function App() {
     let x = Math.random() * (screenW - 100) + 20;
     let y = Math.random() * (screenH - 260) + 80;
 
-    const speed = 20;
+    const speed = 40; 
     const angle = Math.random() * 2 * Math.PI;
     let vx = Math.cos(angle) * speed;
     let vy = Math.sin(angle) * speed;
 
-    if (Math.abs(vx) < 10) vx = vx < 0 ? -12 : 12;
-    if (Math.abs(vy) < 10) vy = vy < 0 ? -12 : 12;
+    if (Math.abs(vx) < 15) vx = vx < 0 ? -20 : 20;
+    if (Math.abs(vy) < 15) vy = vy < 0 ? -20 : 20;
 
     let lastTime = performance.now();
 
@@ -457,9 +458,8 @@ export default function App() {
   const selectedMealIcon = MEAL_ICONS[selectedMealData?.id] || Sparkles;
   const isSelectedMealDone = selectedMealData && selections[selectedMealData.id] !== undefined;
 
-  // Ana taşıyıcıda zorlayıcı flex yapıları tamamen kaldırıldı
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden">
+    <div className="max-w-md mx-auto bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden min-h-screen">
       
       <style>{`
         @keyframes letterUnfold {
@@ -579,11 +579,11 @@ export default function App() {
             <span>Kurallar</span>
           </button>
 
-          {/* Sürpriz Kalp Tam Burada ("Kurallar"ın karşısına sağa yaslanır) */}
+          {/* Okunduktan sonra Kurallar Butonunun Sağına Sabitlenen Kalp Mührü */}
           {heartMode === "docked" && (
             <button
               onClick={handleHeartClick}
-              className="ml-auto flex items-center justify-center w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full shadow-sm shadow-rose-500/40 border border-rose-300 dark:border-rose-900 active:scale-90 transition-transform animate-in zoom-in"
+              className="ml-auto w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md shadow-rose-500/30 active:scale-90 transition-transform animate-in fade-in zoom-in duration-300"
               title="Günün Sevgi Notunu Yeniden Aç"
             >
               <Heart size={13} className="fill-white" />
@@ -592,11 +592,12 @@ export default function App() {
         </div>
       </header>
 
-      {/* Ana İçerik Kartı */}
-      <main className="px-5 pt-2">
-        {/* 1. KİLO TAKİBİ */}
+      {/* Ana İçerik Alanı */}
+      <main className="px-5 pt-2 flex flex-col pb-8">
+        
+        {/* 1. KİLO TAKİBİ KARTI */}
         {activeMeal === "weight" && (
-          <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
+          <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 pb-10 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4 z-10 relative">
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-xs shadow-rose-500/30">
@@ -740,7 +741,7 @@ export default function App() {
 
         {/* 2. YASAKLAR */}
         {activeMeal === "forbidden" && (
-          <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
+          <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 pb-10 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4 z-10 relative">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800/80">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center shrink-0">
@@ -788,7 +789,7 @@ export default function App() {
 
         {/* 3. KURALLAR */}
         {activeMeal === "rules" && (
-          <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
+          <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 pb-10 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4 z-10 relative">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800/80">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center shrink-0">
@@ -822,7 +823,7 @@ export default function App() {
 
         {/* 4. ÖĞÜNLER */}
         {!["weight", "forbidden", "rules"].includes(activeMeal) && selectedMealData && (
-          <section className={`bg-white dark:bg-[#231F1E] rounded-3xl p-5 border transition-all duration-200 shadow-2xs ${
+          <section className={`bg-white dark:bg-[#231F1E] rounded-3xl p-5 pb-10 border transition-all duration-200 z-10 relative shadow-2xs ${
             isSelectedMealDone ? "border-rose-200 dark:border-rose-900/50 shadow-rose-950/5" : "border-stone-100 dark:border-stone-800/80"
           }`}>
             <div className="mb-3.5 space-y-2">
@@ -882,12 +883,13 @@ export default function App() {
             </div>
           </section>
         )}
-      </main>
 
-      {/* ALT MENÜ: KARTIN HEMEN ALTINDA DOĞAL SAYFA AKIŞINDA */}
-      {/* Hiçbir yere sabitlenmez, kart bittiği yerde durur, sayfayı kaydırdıkça içerikle birlikte aşağı-yukarı kayar */}
-      <div className="px-5 pt-4 pb-12">
-        <nav className="w-full bg-white dark:bg-[#231F1E] border border-stone-100 dark:border-stone-800 shadow-sm rounded-2xl p-1.5 flex items-center justify-around transition-colors duration-300">
+        {/* 
+          11111.jpeg EFSANE GÖRÜNÜM: 
+          KARTIN HEMEN ALTINA BİNEN, SAYFAYLA BERABER KAYAN ALT MENÜ!
+          -mt-6 margin ile kartın alt kenarını örtüyor (İçeriğin üstünde duruyor)
+        */}
+        <div className="w-full flex items-center justify-around shrink-0 -mt-6 z-20 relative px-2">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = activeMeal === item.id;
@@ -897,21 +899,21 @@ export default function App() {
               <button
                 key={item.id}
                 onClick={() => setActiveMeal(item.id)}
-                className={`relative flex flex-col items-center justify-center py-2 px-4 rounded-xl transition-all duration-200 active:scale-95 ${
+                className={`relative flex flex-col items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-3xl transition-all duration-300 active:scale-95 ${
                   isActive 
-                    ? "bg-rose-500 text-white shadow-xs shadow-rose-500/30" 
+                    ? "bg-rose-500 text-white shadow-lg shadow-rose-500/40" 
                     : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
                 }`}
               >
                 <div className="relative">
-                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                  <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
                   {isDone && (
-                    <span className={`absolute -top-1 -right-1.5 w-2 h-2 rounded-full ring-2 ${
-                      isActive ? "bg-emerald-300 ring-rose-500" : "bg-emerald-500 ring-white dark:ring-[#231F1E]"
+                    <span className={`absolute -top-1 -right-1.5 w-2.5 h-2.5 rounded-full ring-2 ${
+                      isActive ? "bg-emerald-300 ring-rose-500" : "bg-emerald-500 ring-[#FAF7F5] dark:ring-[#181514]"
                     }`} />
                   )}
                 </div>
-                <span className={`text-[11px] tracking-tight mt-1 font-semibold ${
+                <span className={`text-[11px] tracking-tight mt-1.5 font-bold ${
                   isActive ? "text-white" : "text-stone-500 dark:text-stone-400"
                 }`}>
                   {item.label}
@@ -919,8 +921,8 @@ export default function App() {
               </button>
             );
           })}
-        </nav>
-      </div>
+        </div>
+      </main>
 
       {/* SÜREKLİ SÜZÜLEN KALP */}
       {heartMode === "wandering" && (
@@ -943,7 +945,7 @@ export default function App() {
         </div>
       )}
 
-      {/* MEKTUP MODALI */}
+      {/* ZARİF MEKTUP MODALI */}
       {showLetterModal && (
         <div 
           className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in duration-200"
@@ -991,7 +993,7 @@ export default function App() {
               </h3>
             </div>
 
-            {/* Şık ve Ferah Not Sayfası */}
+            {/* Mektup Sayfası */}
             <div className="bg-white dark:bg-[#181514] border border-rose-100 dark:border-stone-800 rounded-2xl p-6 shadow-2xs min-h-[120px] flex items-center justify-center">
               <p className="text-sm sm:text-base text-stone-800 dark:text-stone-100 leading-relaxed font-serif italic text-center px-1">
                 "{currentLoveNote}"
