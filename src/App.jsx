@@ -46,6 +46,14 @@ const DEFAULT_FORBIDDEN = [
   },
 ];
 
+const DEFAULT_LOVE_NOTES = [
+  "Sen benim bu hayattaki en büyük şansımsın. Her adımında, her anında seninleyim. ❤️",
+  "Bugün kendine biraz daha şefkat göster canım eşim, harika gidiyorsun! 🌸",
+  "Gözlerinin içindeki o güzel gülümseme dünyalara bedel. İyi ki varsın. ✨",
+  "Seninle her şey daha kolay, daha neşeli ve çok daha güzel. Seni çok seviyorum. 💌",
+  "Azmine ve içindeki o güzel güce her gün bir kez daha hayran oluyorum. 🌟"
+];
+
 const getCurrentMealByHour = () => {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 11) return "breakfast";
@@ -71,6 +79,11 @@ export default function App() {
   const [inputDate, setInputDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [savingWeight, setSavingWeight] = useState(false);
 
+  // Sürpriz Aşk Notu State'leri
+  const [showFloatingHeart, setShowFloatingHeart] = useState(false);
+  const [showLetterModal, setShowLetterModal] = useState(false);
+  const [currentLoveNote, setCurrentLoveNote] = useState("");
+
   // Karanlık Mod
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem("theme");
@@ -93,15 +106,17 @@ export default function App() {
   const [authError, setAuthError] = useState("");
 
   const dateKey = format(currentDate, "yyyy-MM-dd");
+  const todayKey = format(new Date(), "yyyy-MM-dd");
   const isAdmin = user && user.uid === ADMIN_UID;
+  const isWife = user?.email?.toLowerCase().includes("cigdem") || isAdmin;
 
   const totalMeals = dietConfig.meals.length;
   const completedMeals = Object.keys(selections).filter((k) => selections[k] !== undefined).length;
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    const isWife = user?.email?.toLowerCase().includes("cigdem");
-    const name = isWife ? "Çiğdem 🌸" : "Sedat";
+    const isWifeName = user?.email?.toLowerCase().includes("cigdem");
+    const name = isWifeName ? "Çiğdem 🌸" : "Sedat";
 
     if (hour >= 5 && hour < 12) return { word: "Günaydın", name };
     if (hour >= 12 && hour < 18) return { word: "Tünaydın", name };
@@ -167,6 +182,79 @@ export default function App() {
     });
     return () => unsubscribe();
   }, [user]);
+
+  // 5 Saniye Sonra Kalp Uçurma Mantığı (Günde Sadece 1 Kez)
+  useEffect(() => {
+    if (!user || !isWife) return;
+
+    let timer;
+    const checkLoveNoteStatus = async () => {
+      try {
+        const metaRef = doc(db, "logs", user.uid, "meta", "love_state");
+        const metaSnap = await getDoc(metaRef);
+        const data = metaSnap.exists() ? metaSnap.data() : {};
+
+        // Eğer bugün zaten görüldüyse hiç çıkarma
+        if (data.lastSeenDate === todayKey) {
+          return;
+        }
+
+        // Görülmediyse 5 saniye sonra kalbi uçur
+        timer = setTimeout(() => {
+          setShowFloatingHeart(true);
+        }, 5000);
+      } catch (err) {
+        console.error("Aşk notu kontrol hatası:", err);
+      }
+    };
+
+    checkLoveNoteStatus();
+    return () => clearTimeout(timer);
+  }, [user, isWife, todayKey]);
+
+  // Kalbe Dokunulduğunda Sıradaki Notu Seç ve Modalı Aç
+  const handleHeartClick = async () => {
+    try {
+      const metaRef = doc(db, "logs", user.uid, "meta", "love_state");
+      const metaSnap = await getDoc(metaRef);
+      const data = metaSnap.exists() ? metaSnap.data() : {};
+      
+      const notes = dietConfig.loveNotes?.length > 0 ? dietConfig.loveNotes : DEFAULT_LOVE_NOTES;
+      const seenIndices = Array.isArray(data.seenIndices) ? data.seenIndices : [];
+
+      // Henüz gösterilmemiş notların indeksleri
+      let availableIndices = notes.map((_, idx) => idx).filter((idx) => !seenIndices.includes(idx));
+
+      let nextIndex;
+      let nextSeen;
+
+      // Liste tamamen bittiyse başa dön
+      if (availableIndices.length === 0) {
+        nextIndex = 0;
+        nextSeen = [0];
+      } else {
+        nextIndex = availableIndices[0];
+        nextSeen = [...seenIndices, nextIndex];
+      }
+
+      setCurrentLoveNote(notes[nextIndex]);
+      setShowFloatingHeart(false);
+      setShowLetterModal(true);
+
+      // Durumu kaydet (Bugün görüldü & bu indeks listeye eklendi)
+      await setDoc(metaRef, {
+        lastSeenDate: todayKey,
+        seenIndices: nextSeen,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+    } catch (err) {
+      console.error("Not açılırken hata:", err);
+      setCurrentLoveNote("Seni çok seviyorum canım eşim! ❤️");
+      setShowFloatingHeart(false);
+      setShowLetterModal(true);
+    }
+  };
 
   const handleSelect = async (mealId, optionIndex) => {
     const updated = { ...selections };
@@ -306,8 +394,22 @@ export default function App() {
   const isSelectedMealDone = selectedMealData && selections[selectedMealData.id] !== undefined;
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] pb-28 flex flex-col font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300">
+    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] pb-28 flex flex-col font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden">
       
+      {/* Özel Uçan Kalp Animasyonu Stili */}
+      <style>{`
+        @keyframes floatRandom {
+          0% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
+          25% { transform: translate(18px, -24px) rotate(8deg) scale(1.06); }
+          50% { transform: translate(-14px, -46px) rotate(-6deg) scale(0.96); }
+          75% { transform: translate(16px, -28px) rotate(5deg) scale(1.04); }
+          100% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
+        }
+        .animate-heart-drift {
+          animation: floatRandom 4.8s ease-in-out infinite;
+        }
+      `}</style>
+
       {/* Minimalist Üst Bar */}
       <header className="px-6 pt-7 pb-3 bg-[#FAF7F5] dark:bg-[#181514] transition-colors duration-300">
         <div className="flex items-center justify-between text-stone-400 dark:text-stone-500 mb-3">
@@ -448,7 +550,6 @@ export default function App() {
               </span>
             </div>
 
-            {/* İstatistik Özeti */}
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-[#FAF7F5] dark:bg-[#181514] rounded-2xl p-2.5 text-center">
                 <span className="text-[9px] uppercase tracking-wider font-semibold text-stone-400 dark:text-stone-500 block">
@@ -482,7 +583,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Yeni Tartı Giriş Formu */}
             <form onSubmit={handleAddWeight} className="space-y-2 pt-1 border-t border-stone-100 dark:border-stone-800/80">
               <span className="text-[11px] font-bold text-stone-700 dark:text-stone-300 block">
                 Yeni Tartı Girişi
@@ -515,7 +615,6 @@ export default function App() {
               </button>
             </form>
 
-            {/* Geçmiş Tartılar */}
             <div className="space-y-2 pt-2 border-t border-stone-100 dark:border-stone-800/80">
               <span className="text-[11px] font-bold text-stone-600 dark:text-stone-400 block">
                 Geçmiş Ölçümler ({sortedWeights.length})
@@ -577,7 +676,7 @@ export default function App() {
           </section>
         )}
 
-        {/* 2. YASAKLAR KARTI: Tek Sütunlu, Geniş ve Otomatik Alfabetik Sıralı */}
+        {/* 2. YASAKLAR KARTI: Tek Sütunlu, Otomatik Alfabetik Sıralı */}
         {activeMeal === "forbidden" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800/80">
@@ -598,16 +697,10 @@ export default function App() {
 
             <div className="space-y-4">
               {(dietConfig.forbidden || DEFAULT_FORBIDDEN).map((group, gIdx) => {
-                // Türkçe alfabesine göre otomatik sıralama (A-Z)
-                const sortedItems = [...(group.items || [])].sort((a, b) =>
-                  a.localeCompare(b, "tr")
-                );
+                const sortedItems = [...(group.items || [])].sort((a, b) => a.localeCompare(b, "tr"));
 
                 return (
-                  <div 
-                    key={gIdx} 
-                    className="bg-[#FAF7F5]/70 dark:bg-[#1C1817]/60 border border-stone-200/60 dark:border-stone-800/70 rounded-2xl p-3.5 space-y-2.5"
-                  >
+                  <div key={gIdx} className="bg-[#FAF7F5]/70 dark:bg-[#1C1817]/60 border border-stone-200/60 dark:border-stone-800/70 rounded-2xl p-3.5 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <h3 className="font-bold text-rose-600 dark:text-rose-400 text-xs tracking-wide">
                         {group.category}
@@ -617,13 +710,9 @@ export default function App() {
                       </span>
                     </div>
 
-                    {/* Tek Sütunlu, Kırpılmayan ve Rahat Okunan Liste */}
                     <div className="space-y-1.5">
                       {sortedItems.map((item, iIdx) => (
-                        <div
-                          key={iIdx}
-                          className="bg-white dark:bg-[#231F1E] border border-stone-200/70 dark:border-stone-800 px-3.5 py-2.5 rounded-xl text-xs text-stone-700 dark:text-stone-200 font-medium shadow-2xs flex items-center gap-2.5"
-                        >
+                        <div key={iIdx} className="bg-white dark:bg-[#231F1E] border border-stone-200/70 dark:border-stone-800 px-3.5 py-2.5 rounded-xl text-xs text-stone-700 dark:text-stone-200 font-medium shadow-2xs flex items-center gap-2.5">
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
                           <span className="leading-snug">{item}</span>
                         </div>
@@ -636,7 +725,7 @@ export default function App() {
           </section>
         )}
 
-        {/* 3. KURALLAR KARTI: Numaralı, Geniş Satır Aralıklı Mikro-Kartlar */}
+        {/* 3. KURALLAR KARTI */}
         {activeMeal === "rules" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800/80">
@@ -657,10 +746,7 @@ export default function App() {
 
             <div className="space-y-2.5">
               {dietConfig.warnings.map((w, idx) => (
-                <div 
-                  key={idx} 
-                  className="bg-[#FAF7F5]/70 dark:bg-[#1C1817]/60 border border-stone-100 dark:border-stone-800/80 rounded-2xl p-3.5 flex items-start gap-3 transition-all hover:border-stone-200 dark:hover:border-stone-700"
-                >
+                <div key={idx} className="bg-[#FAF7F5]/70 dark:bg-[#1C1817]/60 border border-stone-100 dark:border-stone-800/80 rounded-2xl p-3.5 flex items-start gap-3">
                   <span className="w-6 h-6 rounded-xl bg-white dark:bg-[#231F1E] border border-rose-200/80 dark:border-rose-900/50 text-rose-500 dark:text-rose-400 text-[11px] font-bold flex items-center justify-center shrink-0 shadow-2xs">
                     {idx + 1}
                   </span>
@@ -673,21 +759,15 @@ export default function App() {
           </section>
         )}
 
-        {/* 4. STANDART ÖĞÜNLER (Sabah, Öğle, Ara, Akşam) */}
+        {/* 4. STANDART ÖĞÜNLER */}
         {!["weight", "forbidden", "rules"].includes(activeMeal) && selectedMealData && (
-          <section 
-            className={`bg-white dark:bg-[#231F1E] rounded-3xl p-5 border transition-all duration-200 shadow-2xs ${
-              isSelectedMealDone 
-                ? "border-rose-200 dark:border-rose-900/50 shadow-rose-950/5" 
-                : "border-stone-100 dark:border-stone-800/80"
-            }`}
-          >
+          <section className={`bg-white dark:bg-[#231F1E] rounded-3xl p-5 border transition-all duration-200 shadow-2xs ${
+            isSelectedMealDone ? "border-rose-200 dark:border-rose-900/50 shadow-rose-950/5" : "border-stone-100 dark:border-stone-800/80"
+          }`}>
             <div className="mb-3.5 space-y-2">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${
-                  isSelectedMealDone 
-                    ? "bg-rose-500 text-white shadow-xs shadow-rose-500/30" 
-                    : "bg-stone-50 dark:bg-stone-800/60 text-stone-500 dark:text-stone-400"
+                  isSelectedMealDone ? "bg-rose-500 text-white shadow-xs shadow-rose-500/30" : "bg-stone-50 dark:bg-stone-800/60 text-stone-500 dark:text-stone-400"
                 }`}>
                   {React.createElement(selectedMealIcon, { size: 19 })}
                 </div>
@@ -716,7 +796,6 @@ export default function App() {
               )}
             </div>
 
-            {/* Öğün Seçenekleri */}
             <div className="space-y-2.5 pt-1">
               {selectedMealData.options.map((opt, idx) => {
                 const isSelected = selections[selectedMealData.id] === idx;
@@ -731,9 +810,7 @@ export default function App() {
                     }`}
                   >
                     <div className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 transition-all ${
-                      isSelected 
-                        ? "border-rose-500 bg-rose-500 text-white shadow-2xs" 
-                        : "border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800"
+                      isSelected ? "border-rose-500 bg-rose-500 text-white shadow-2xs" : "border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800"
                     }`}>
                       {isSelected && <Check size={11} strokeWidth={3} />}
                     </div>
@@ -745,6 +822,85 @@ export default function App() {
           </section>
         )}
       </main>
+
+      {/* 5. UÇAN SÜRPRİZ KALP (5 Saniye Sonra Ekranda Süzülen Kalp) */}
+      {showFloatingHeart && (
+        <div 
+          onClick={handleHeartClick}
+          className="fixed bottom-24 right-6 z-50 cursor-pointer animate-heart-drift active:scale-90 transition-transform"
+          title="Sana bir sürpriz var! Dokun"
+        >
+          <div className="relative group">
+            <div className="absolute -inset-2 bg-rose-400/30 rounded-full blur-md animate-pulse" />
+            <div className="w-13 h-13 bg-gradient-to-tr from-rose-500 to-pink-400 text-white rounded-full flex items-center justify-center shadow-lg shadow-rose-500/40 border-2 border-white/80">
+              <Heart size={26} className="fill-white animate-pulse" />
+            </div>
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* 6. AŞK MEKTUBU MODALI */}
+      {showLetterModal && (
+        <div 
+          className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/75 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in zoom-in-95 duration-200"
+          onClick={() => setShowLetterModal(false)}
+        >
+          <div 
+            className="bg-white dark:bg-[#231F1E] rounded-3xl max-w-xs sm:max-w-sm w-full p-6 shadow-2xl border border-rose-100 dark:border-stone-800 relative text-center space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Kapat Butonu */}
+            <button
+              onClick={() => setShowLetterModal(false)}
+              className="absolute top-4 right-4 w-7 h-7 bg-stone-100 dark:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors"
+            >
+              <X size={15} />
+            </button>
+
+            {/* Mektup Görseli */}
+            <div className="pt-2 flex justify-center">
+              <img 
+                src={`${import.meta.env.BASE_URL}images/love-letter.webp`} 
+                alt="Sevgi Mektubu"
+                className="w-36 h-36 object-contain drop-shadow-md animate-in zoom-in duration-300"
+                onError={(e) => {
+                  // Eğer görsel henüz eklenmediyse şık yedek ikon göster
+                  e.target.style.display = 'none';
+                }}
+              />
+            </div>
+
+            {/* Başlık */}
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500 dark:text-rose-400 block mb-1">
+                Günün Sürprizi
+              </span>
+              <h3 className="text-base font-extrabold text-stone-800 dark:text-stone-100 tracking-tight">
+                Sana Küçük Bir Notum Var 💌
+              </h3>
+            </div>
+
+            {/* Söz Kartı */}
+            <div className="bg-[#FAF7F5] dark:bg-[#181514] border border-rose-100 dark:border-stone-800/80 rounded-2xl p-4 shadow-2xs">
+              <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-200 leading-relaxed italic font-serif">
+                "{currentLoveNote}"
+              </p>
+            </div>
+
+            {/* Kapat Butonu */}
+            <button
+              onClick={() => setShowLetterModal(false)}
+              className="w-full bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-2xl text-xs font-bold shadow-xs shadow-rose-500/25 transition-all active:scale-[0.98]"
+            >
+              Gülümse ve Devam Et ✨
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Alt 4'lü Menü (Sabah, Öğle, Ara, Akşam) */}
       <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around z-40 transition-colors duration-300">
