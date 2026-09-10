@@ -28,18 +28,24 @@ const DEFAULT_LOVE_NOTES = [
 
 export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
   const [formData, setFormData] = useState(() => {
-    const data = JSON.parse(JSON.stringify(initialData));
+    const data = JSON.parse(JSON.stringify(initialData || {}));
     if (!data.forbidden || data.forbidden.length === 0) {
       data.forbidden = DEFAULT_FORBIDDEN;
     }
     if (!data.loveNotes || data.loveNotes.length === 0) {
       data.loveNotes = DEFAULT_LOVE_NOTES;
     }
+    if (!data.warnings) {
+      data.warnings = [];
+    }
+    if (!data.meals) {
+      data.meals = [];
+    }
     return data;
   });
 
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("meals"); // "meals" | "forbidden" | "warnings" | "loveNotes"
+  const [activeTab, setActiveTab] = useState("meals");
 
   // 1. Kurallar
   const handleWarningChange = (index, value) => {
@@ -124,16 +130,19 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
     setFormData({ ...formData, loveNotes: formData.loveNotes.filter((_, i) => i !== index) });
   };
 
-  // Kaydet
+  // Kaydet (Undefined alanları temizler)
   const handleSave = async () => {
     setSaving(true);
     try {
-      await setDoc(doc(db, "config", "diet_data"), formData);
-      onSaveSuccess(formData);
+      const cleanData = JSON.parse(
+        JSON.stringify(formData, (key, value) => (value === undefined ? "" : value))
+      );
+      await setDoc(doc(db, "config", "diet_data"), cleanData);
+      onSaveSuccess(cleanData);
       onClose();
     } catch (err) {
       console.error("Diyet ayarları kaydedilemedi:", err);
-      alert("Ayarlar kaydedilirken hata oluştu.");
+      alert(`Ayarlar kaydedilirken hata oluştu:\n${err.code || err.message}`);
     } finally {
       setSaving(false);
     }
@@ -148,7 +157,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
         className="bg-white dark:bg-[#1C1817] border border-stone-200 dark:border-stone-800 rounded-3xl w-full max-w-lg max-h-[88vh] flex flex-col shadow-2xl overflow-hidden transition-colors duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Üst Başlık & 4'lü Sekmeler */}
+        {/* Üst Başlık & Sekmeler */}
         <div className="px-5 pt-4 pb-3 border-b border-stone-100 dark:border-stone-800 shrink-0 bg-white/95 dark:bg-[#1C1817]/95">
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center gap-2">
@@ -239,7 +248,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-stone-400 mb-1">Görsel Adı (images/...)</label>
+                      <label className="block text-[10px] font-semibold text-stone-400 mb-1">Görsel Adı</label>
                       <input
                         type="text"
                         value={meal.image || ""}
@@ -351,7 +360,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
           {activeTab === "loveNotes" && (
             <div className="space-y-3">
               <p className="text-[11px] text-stone-400 dark:text-stone-500 leading-relaxed">
-                Eşin uygulamaya girdiğinde günde bir kez açılacak mektupta gösterilecek sevgi sözleri. Her gün sırayla gösterilir ve liste bitmeden tekrar etmez.
+                Eşinin her gün göreceği sevgi sözleri. Her gün sırayla gösterilir ve liste tükenmeden aynı söz tekrar etmez.
               </p>
               
               <div className="space-y-2.5">
