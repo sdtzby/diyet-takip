@@ -124,25 +124,40 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
     setFormData({ ...formData, loveNotes: updated });
   };
   const addLoveNote = () => {
-    setFormData({ ...formData, loveNotes: [...formData.loveNotes, "Seni çok seviyorum..."] });
+    setFormData({ ...formData, loveNotes: [...formData.loveNotes, "Yeni sevgi sözü..."] });
   };
   const removeLoveNote = (index) => {
     setFormData({ ...formData, loveNotes: formData.loveNotes.filter((_, i) => i !== index) });
   };
 
-  // Kaydet (Undefined alanları temizler)
+  // Kaydet: Veriyi temizleyip Firestore'a gönderir
   const handleSave = async () => {
     setSaving(true);
     try {
-      const cleanData = JSON.parse(
-        JSON.stringify(formData, (key, value) => (value === undefined ? "" : value))
-      );
-      await setDoc(doc(db, "config", "diet_data"), cleanData);
-      onSaveSuccess(cleanData);
+      // Firestore'un undefined hatası vermesini engellemek için nesneyi sanitize et
+      const sanitizedData = {
+        meals: (formData.meals || []).map((m) => ({
+          id: m.id || "",
+          title: m.title || "",
+          note: m.note || "",
+          image: m.image || "",
+          options: (m.options || []).filter((opt) => typeof opt === "string" && opt.trim() !== ""),
+        })),
+        forbidden: (formData.forbidden || []).map((f) => ({
+          category: f.category || "",
+          items: (f.items || []).filter((item) => typeof item === "string" && item.trim() !== ""),
+        })),
+        warnings: (formData.warnings || []).filter((w) => typeof w === "string" && w.trim() !== ""),
+        loveNotes: (formData.loveNotes || []).filter((n) => typeof n === "string" && n.trim() !== ""),
+      };
+
+      await setDoc(doc(db, "config", "diet_data"), sanitizedData);
+      onSaveSuccess(sanitizedData);
       onClose();
     } catch (err) {
       console.error("Diyet ayarları kaydedilemedi:", err);
-      alert(`Ayarlar kaydedilirken hata oluştu:\n${err.code || err.message}`);
+      // Hata olursa artık generic uyarı yerine net hatayı basar
+      alert(`Kayıt Başarısız:\n${err.code || err.message}`);
     } finally {
       setSaving(false);
     }
@@ -244,7 +259,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                         type="text"
                         value={meal.note || ""}
                         onChange={(e) => handleMealFieldChange(mIdx, "note", e.target.value)}
-                        className="w-full bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1.5 text-xs text-stone-800 dark:text-stone-100"
+                        className="w-full bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1.5 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
                       />
                     </div>
                     <div>
@@ -253,7 +268,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                         type="text"
                         value={meal.image || ""}
                         onChange={(e) => handleMealFieldChange(mIdx, "image", e.target.value)}
-                        className="w-full bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1.5 text-xs text-stone-800 dark:text-stone-100"
+                        className="w-full bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1.5 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
                       />
                     </div>
                   </div>
@@ -266,14 +281,14 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                           type="text"
                           value={opt}
                           onChange={(e) => handleOptionChange(mIdx, oIdx, e.target.value)}
-                          className="flex-1 bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1.5 text-xs text-stone-800 dark:text-stone-100"
+                          className="flex-1 bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1.5 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
                         />
-                        <button onClick={() => removeOption(mIdx, oIdx)} className="p-1.5 text-stone-400 hover:text-rose-600">
+                        <button onClick={() => removeOption(mIdx, oIdx)} className="p-1.5 text-stone-400 hover:text-rose-600 transition-colors">
                           <Trash2 size={14} />
                         </button>
                       </div>
                     ))}
-                    <button onClick={() => addOption(mIdx)} className="flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+                    <button onClick={() => addOption(mIdx)} className="flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline">
                       <Plus size={13} />
                       <span>Alternatif Ekle</span>
                     </button>
@@ -295,10 +310,10 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                         type="text"
                         value={cat.category}
                         onChange={(e) => handleForbiddenCategoryChange(cIdx, e.target.value)}
-                        className="w-full bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1.5 text-xs font-bold text-stone-800 dark:text-stone-100"
+                        className="w-full bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1.5 text-xs font-bold text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
                       />
                     </div>
-                    <button onClick={() => removeForbiddenCategory(cIdx)} className="mt-4 p-2 text-stone-400 hover:text-rose-600">
+                    <button onClick={() => removeForbiddenCategory(cIdx)} className="mt-4 p-2 text-stone-400 hover:text-rose-600 transition-colors">
                       <Trash2 size={15} />
                     </button>
                   </div>
@@ -311,21 +326,21 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                           type="text"
                           value={item}
                           onChange={(e) => handleForbiddenItemChange(cIdx, iIdx, e.target.value)}
-                          className="flex-1 bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1 text-xs text-stone-800 dark:text-stone-100"
+                          className="flex-1 bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
                         />
-                        <button onClick={() => removeForbiddenItem(cIdx, iIdx)} className="p-1 text-stone-400 hover:text-rose-600">
+                        <button onClick={() => removeForbiddenItem(cIdx, iIdx)} className="p-1 text-stone-400 hover:text-rose-600 transition-colors">
                           <Trash2 size={13} />
                         </button>
                       </div>
                     ))}
-                    <button onClick={() => addForbiddenItem(cIdx)} className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+                    <button onClick={() => addForbiddenItem(cIdx)} className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline">
                       <Plus size={13} />
                       <span>Madde Ekle</span>
                     </button>
                   </div>
                 </div>
               ))}
-              <button onClick={addForbiddenCategory} className="w-full py-2.5 border border-dashed border-rose-300 dark:border-rose-800/80 rounded-2xl text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center justify-center gap-1.5">
+              <button onClick={addForbiddenCategory} className="w-full py-2.5 border border-dashed border-rose-300 dark:border-rose-800/80 rounded-2xl text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 flex items-center justify-center gap-1.5 transition-colors">
                 <Plus size={14} />
                 <span>Yeni Yasak Kategorisi</span>
               </button>
@@ -344,12 +359,12 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                     onChange={(e) => handleWarningChange(idx, e.target.value)}
                     className="flex-1 bg-transparent border-0 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden"
                   />
-                  <button onClick={() => removeWarning(idx)} className="p-1 text-stone-400 hover:text-rose-600">
+                  <button onClick={() => removeWarning(idx)} className="p-1 text-stone-400 hover:text-rose-600 transition-colors">
                     <Trash2 size={14} />
                   </button>
                 </div>
               ))}
-              <button onClick={addWarning} className="w-full mt-2 py-2.5 border border-dashed border-rose-300 dark:border-rose-800/80 rounded-2xl text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center justify-center gap-1.5">
+              <button onClick={addWarning} className="w-full mt-2 py-2.5 border border-dashed border-rose-300 dark:border-rose-800/80 rounded-2xl text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 flex items-center justify-center gap-1.5 transition-colors">
                 <Plus size={14} />
                 <span>Yeni Prensip Ekle</span>
               </button>
@@ -360,7 +375,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
           {activeTab === "loveNotes" && (
             <div className="space-y-3">
               <p className="text-[11px] text-stone-400 dark:text-stone-500 leading-relaxed">
-                Eşinin her gün göreceği sevgi sözleri. Her gün sırayla gösterilir ve liste tükenmeden aynı söz tekrar etmez.
+                Eşinin her gün göreceği sevgi sözleri. Sırayla gösterilir ve liste tükenmeden aynı söz tekrar etmez.
               </p>
               
               <div className="space-y-2.5">
@@ -371,9 +386,9 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                       rows={2}
                       value={note}
                       onChange={(e) => handleLoveNoteChange(idx, e.target.value)}
-                      className="flex-1 bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl p-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden resize-none"
+                      className="flex-1 bg-white dark:bg-[#181514] border border-stone-200 dark:border-stone-700/80 rounded-xl p-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden resize-none focus:border-rose-400"
                     />
-                    <button onClick={() => removeLoveNote(idx)} className="p-1.5 text-stone-400 hover:text-rose-600 mt-1">
+                    <button onClick={() => removeLoveNote(idx)} className="p-1.5 text-stone-400 hover:text-rose-600 mt-1 transition-colors">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -394,13 +409,13 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
 
         {/* Alt Butonlar */}
         <div className="px-5 py-3 border-t border-stone-100 dark:border-stone-800 bg-stone-50/80 dark:bg-[#1C1817] flex justify-end gap-2 shrink-0">
-          <button onClick={onClose} className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-600 dark:text-stone-400">
+          <button onClick={onClose} className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-600 dark:text-stone-400 hover:bg-stone-200/60 dark:hover:bg-stone-800 transition-colors">
             İptal
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-1.5 bg-rose-500 hover:bg-rose-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-xs shadow-rose-500/25 transition-all disabled:opacity-60"
+            className="flex items-center gap-1.5 bg-rose-500 hover:bg-rose-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-xs shadow-rose-500/25 transition-all disabled:opacity-60 active:scale-95"
           >
             <Save size={14} />
             <span>{saving ? "Kaydediliyor..." : "Değişiklikleri Kaydet"}</span>
