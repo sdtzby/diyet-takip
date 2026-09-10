@@ -73,7 +73,7 @@ export default function App() {
   const [inputDate, setInputDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [savingWeight, setSavingWeight] = useState(false);
 
-  // Karanlık Mod Yönetimi
+  // Karanlık Mod & PWA Status Bar Yönetimi
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem("theme");
     if (saved) return saved === "dark";
@@ -81,6 +81,8 @@ export default function App() {
   });
 
   useEffect(() => {
+    const themeColor = isDark ? "#181514" : "#FAF7F5";
+    
     if (isDark) {
       document.documentElement.classList.add("dark");
       localStorage.setItem("theme", "dark");
@@ -88,6 +90,15 @@ export default function App() {
       document.documentElement.classList.remove("dark");
       localStorage.setItem("theme", "light");
     }
+
+    // PWA Mobil Status Bar Rengi Güncelleme (Android & iOS Safari)
+    let metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (!metaTheme) {
+      metaTheme = document.createElement("meta");
+      metaTheme.setAttribute("name", "theme-color");
+      document.head.appendChild(metaTheme);
+    }
+    metaTheme.setAttribute("content", themeColor);
   }, [isDark]);
 
   const [email, setEmail] = useState("");
@@ -230,7 +241,7 @@ export default function App() {
     }
   };
 
-  // İstatistiksel Değerler
+  // İstatistikler
   const sortedWeights = [...weights].sort((a, b) => new Date(b.date) - new Date(a.date));
   const currentWeight = sortedWeights.length > 0 ? sortedWeights[0].weight : START_WEIGHT;
   const prevWeight = sortedWeights.length > 1 ? sortedWeights[1].weight : START_WEIGHT;
@@ -311,7 +322,7 @@ export default function App() {
     <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] pb-28 flex flex-col font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300">
       
       {/* Minimalist Üst Bar */}
-      <header className="px-6 pt-7 pb-4 bg-[#FAF7F5] dark:bg-[#181514] transition-colors duration-300">
+      <header className="px-6 pt-7 pb-3 bg-[#FAF7F5] dark:bg-[#181514] transition-colors duration-300">
         <div className="flex items-center justify-between text-stone-400 dark:text-stone-500 mb-3">
           <div className="flex items-center gap-2">
             <button 
@@ -360,7 +371,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Selamlama ve 4 Öğün İlerleme Noktası */}
+        {/* Selamlama ve İlerleme Noktaları */}
         <div className="flex items-center justify-between gap-2">
           <h1 className="text-lg font-light tracking-tight text-stone-800 dark:text-stone-100 truncate">
             {greeting.word},{" "}
@@ -383,8 +394,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Üst Buton Grubu: Kilo + Yasaklar + Kurallar */}
-        <div className="mt-3 flex items-center justify-end gap-1.5">
+        {/* 1. DÜZENLEME: Sola Yaslı Aksiyon Butonları (Kilo, Yasaklar, Kurallar) */}
+        <div className="mt-3 flex items-center justify-start gap-1.5">
           <button
             onClick={() => setActiveMeal("weight")}
             className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95 ${
@@ -476,7 +487,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Yeni Ölçüm Giriş Formu */}
+            {/* Yeni Tartı Giriş Formu */}
             <form onSubmit={handleAddWeight} className="space-y-2 pt-1 border-t border-stone-100 dark:border-stone-800/80">
               <span className="text-[11px] font-bold text-stone-700 dark:text-stone-300 block">
                 Yeni Tartı Girişi
@@ -570,7 +581,7 @@ export default function App() {
             </div>
           </section>
         ) : (
-          /* STANDART ÖĞÜN KARTI */
+          /* 2. DÜZENLEME: STANDART ÖĞÜN KARTI (Örnek Butonu Başlığın Sağında & Not Kart Genişliğinde) */
           selectedMealData && (
             <section 
               className={`bg-white dark:bg-[#231F1E] rounded-3xl p-5 border transition-all duration-200 shadow-2xs ${
@@ -579,39 +590,44 @@ export default function App() {
                   : "border-stone-100 dark:border-stone-800/80"
               }`}
             >
-              <div className="flex justify-between items-start mb-4">
+              {/* Kart Üst Alanı */}
+              <div className="mb-3.5 space-y-2">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${
                     isSelectedMealDone 
                       ? "bg-rose-500 text-white shadow-xs shadow-rose-500/30" 
                       : "bg-stone-50 dark:bg-stone-800/60 text-stone-500 dark:text-stone-400"
                   }`}>
                     {React.createElement(selectedMealIcon, { size: 19 })}
                   </div>
-                  <div>
+
+                  {/* Başlık ve Yanındaki Örnek Butonu */}
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
                     <h2 className="font-extrabold text-stone-800 dark:text-stone-100 text-base tracking-tight">
                       {selectedMealData.title}
                     </h2>
-                    {selectedMealData.note && (
-                      <p className="text-[11px] text-stone-400 dark:text-stone-500 leading-tight mt-0.5">
-                        {selectedMealData.note}
-                      </p>
+                    
+                    {selectedMealData.image && (
+                      <button
+                        onClick={() => setPreviewImage(selectedMealData.image)}
+                        className="inline-flex items-center gap-1 bg-stone-50 dark:bg-stone-800/80 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-stone-600 dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 border border-stone-200/80 dark:border-stone-700/80 hover:border-rose-200 px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all active:scale-95"
+                      >
+                        <Camera size={11} className="text-rose-500 dark:text-rose-400" />
+                        <span>Örnek</span>
+                      </button>
                     )}
                   </div>
                 </div>
 
-                {selectedMealData.image && (
-                  <button
-                    onClick={() => setPreviewImage(selectedMealData.image)}
-                    className="flex items-center gap-1 bg-stone-50 dark:bg-stone-800/80 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200/70 dark:border-stone-700/80 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl transition-colors active:scale-95"
-                  >
-                    <Camera size={13} className="text-rose-500 dark:text-rose-400" />
-                    <span>Örnek</span>
-                  </button>
+                {/* Kart Genişliğinde Açıklama / Not Yazısı */}
+                {selectedMealData.note && (
+                  <p className="text-[11px] text-stone-400 dark:text-stone-500 leading-relaxed pl-1 w-full">
+                    {selectedMealData.note}
+                  </p>
                 )}
               </div>
 
-              {/* Öğün Seçenekleri */}
+              {/* Seçenekler */}
               <div className="space-y-2.5 pt-1">
                 {selectedMealData.options.map((opt, idx) => {
                   const isSelected = selections[selectedMealData.id] === idx;
