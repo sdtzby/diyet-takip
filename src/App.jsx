@@ -4,11 +4,12 @@ import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebas
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { DIET_DATA } from "./data/dietData";
 import AdminPanel from "./components/AdminPanel";
+import WeightTracker from "./components/WeightTracker";
 import { format, addDays, subDays } from "date-fns";
 import { tr } from "date-fns/locale";
 import { 
   ChevronLeft, ChevronRight, Sparkles, LogOut, 
-  Check, Settings, Camera, X, Sun, Moon, Coffee, BookOpen, Ban 
+  Check, Settings, Camera, X, Sun, Moon, Coffee, BookOpen, Ban, Scale 
 } from "lucide-react";
 
 const MEAL_ICONS = {
@@ -51,6 +52,7 @@ const getCurrentMealByHour = () => {
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentView, setCurrentView] = useState("diet"); // "diet" | "weight"
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dietConfig, setDietConfig] = useState(DIET_DATA);
   const [selections, setSelections] = useState({});
@@ -254,6 +256,11 @@ export default function App() {
     );
   }
 
+  // Kilo Takip Sayfası Seçiliyse Ayrı Sayfa Olarak Render Et
+  if (currentView === "weight") {
+    return <WeightTracker user={user} onBack={() => setCurrentView("diet")} />;
+  }
+
   const selectedMealData = dietConfig.meals.find((m) => m.id === activeMeal) || dietConfig.meals[0];
   const selectedMealIcon = MEAL_ICONS[selectedMealData?.id] || Sparkles;
   const isSelectedMealDone = selectedMealData && selections[selectedMealData.id] !== undefined;
@@ -337,19 +344,31 @@ export default function App() {
           </div>
         </div>
 
-        {/* Alt Sıra: İpucu & Yasaklar + Kurallar Butonları */}
+        {/* Alt Sıra: İpucu & Kilo Takibi + Yasaklar + Kurallar */}
         <div className="mt-2.5 flex items-center justify-between">
           <p className="text-xs text-stone-400 dark:text-stone-500 font-normal truncate mr-2">
             {greeting.sub}
           </p>
           <div className="shrink-0 flex items-center gap-1.5">
+            {/* Kilo Takibi Butonu */}
+            <button
+              onClick={() => setCurrentView("weight")}
+              className="flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 bg-rose-50/90 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-900/70 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
+            >
+              <Scale size={11} className="text-rose-500" />
+              <span>Kilo</span>
+            </button>
+
+            {/* Yasaklar Butonu */}
             <button
               onClick={() => setShowForbidden(true)}
-              className="flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200/70 dark:border-rose-900/60 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
+              className="flex items-center gap-1 text-[11px] font-semibold text-stone-600 dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-[#231F1E] border border-stone-200/80 dark:border-stone-800 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
             >
               <Ban size={11} className="text-rose-500" />
               <span>Yasaklar</span>
             </button>
+
+            {/* Kurallar Butonu */}
             <button
               onClick={() => setShowRules(true)}
               className="flex items-center gap-1 text-[11px] font-semibold text-stone-500 dark:text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-[#231F1E] border border-stone-200/80 dark:border-stone-800 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
