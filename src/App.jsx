@@ -87,6 +87,22 @@ export default function App() {
   const heartRef = useRef(null);
   const animFrameRef = useRef(null);
 
+  // PWA ÖNBELLEK TEMİZLEYİCİ (Kodun cihaza kilitlenmesini engeller)
+  useEffect(() => {
+    if ('caches' in window) {
+      caches.keys().then((names) => {
+        names.forEach(name => caches.delete(name));
+      });
+    }
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+  }, []);
+
   // Karanlık Mod
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem("theme");
@@ -197,7 +213,7 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [user, isWife]);
 
-  // Kesintisiz, Yavaş ve Seken Kalp Motoru
+  // 1. DÜZENLEME: Çok Yavaş ve Kesintisiz Seken Kalp Animasyonu
   useEffect(() => {
     if (heartMode !== "wandering") return;
 
@@ -208,14 +224,14 @@ export default function App() {
     let x = Math.random() * (screenW - 100) + 20;
     let y = Math.random() * (screenH - 260) + 80;
 
-    // Yavaş ve yumuşak süzülme hızı
-    const speed = 35;
+    // HIZI İYİCE DÜŞÜRDÜK: Saniyede 15 Piksel (Çok yavaş ve dinlendirici)
+    const speed = 15; 
     const angle = Math.random() * 2 * Math.PI;
     let vx = Math.cos(angle) * speed;
     let vy = Math.sin(angle) * speed;
 
-    if (Math.abs(vx) < 15) vx = vx < 0 ? -20 : 20;
-    if (Math.abs(vy) < 15) vy = vy < 0 ? -20 : 20;
+    if (Math.abs(vx) < 8) vx = vx < 0 ? -12 : 12;
+    if (Math.abs(vy) < 8) vy = vy < 0 ? -12 : 12;
 
     let lastTime = performance.now();
 
@@ -448,7 +464,7 @@ export default function App() {
   const isSelectedMealDone = selectedMealData && selections[selectedMealData.id] !== undefined;
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden pb-12">
+    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden pb-4">
       
       {/* Özel Animasyonlar */}
       <style>{`
@@ -580,8 +596,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* Ana İçerik Alanı: Kart ve Alt Menü Doğal Sayfa Akışında */}
-      <main className="px-5 pt-2 space-y-4">
+      {/* Ana İçerik Alanı */}
+      <main className="px-5 pt-2">
         
         {/* 1. KİLO TAKİBİ KARTI */}
         {activeMeal === "weight" && (
@@ -879,18 +895,18 @@ export default function App() {
           </section>
         )}
 
-        {/* 5. ALT MENÜ: KARTIN HEMEN ALTINDA DOĞAL AKIŞTA (ASLA FIXED DEĞİL) */}
-        <div className="w-full pt-1">
-          <nav className="w-full bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around z-20 transition-colors duration-300 relative">
+        {/* 5. ALT MENÜ: KARTIN HEMEN ALTINDA, DOĞAL SAYFA AKIŞINDA (KESİNLİKLE SABİT DEĞİL) */}
+        <div className="w-full pt-4 pb-2">
+          <nav className="w-full bg-white/95 dark:bg-[#231F1E]/95 border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around relative">
             
-            {/* Sabit Kalp: Öğle ile Ara Arasında (left-1/2) */}
+            {/* 2. DÜZENLEME: Sabit Kalp Tam Öğle İle Ara Arasında (left-1/2) */}
             {heartMode === "docked" && (
               <button
                 onClick={handleHeartClick}
-                className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md shadow-rose-500/40 border-2 border-white dark:border-[#231F1E] active:scale-90 transition-transform z-30 animate-in zoom-in-75 duration-300 group"
+                className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md shadow-rose-500/40 border-[3px] border-[#FAF7F5] dark:border-[#181514] active:scale-90 transition-transform z-30 animate-in zoom-in-75 duration-300 group"
                 title="Günün Sevgi Notunu Yeniden Aç"
               >
-                <Heart size={13} className="fill-white group-hover:scale-110 transition-transform" />
+                <Heart size={14} className="fill-white group-hover:scale-110 transition-transform" />
               </button>
             )}
 
@@ -929,7 +945,7 @@ export default function App() {
         </div>
       </main>
 
-      {/* SÜREKLİ SÜZÜLEN VE YAVAŞÇA SEKME YAPAN KALP */}
+      {/* 1. DÜZENLEME: YAVAŞ, AKICI VE KESİNTİSİZ SEKME YAPAN KALP */}
       {heartMode === "wandering" && (
         <div 
           ref={heartRef}
@@ -950,7 +966,7 @@ export default function App() {
         </div>
       )}
 
-      {/* MEKTUP MODALI */}
+      {/* 4. DÜZENLEME: ZARİF VE SADE MEKTUP MODALI */}
       {showLetterModal && (
         <div 
           className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in duration-200"
@@ -974,7 +990,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Kapat Butonu */}
+            {/* Kapat */}
             <button
               onClick={() => setShowLetterModal(false)}
               className="absolute top-3.5 right-3.5 w-7 h-7 bg-white dark:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors shadow-2xs"
@@ -992,10 +1008,10 @@ export default function App() {
               </h3>
             </div>
 
-            {/* Mektup Sayfası */}
-            <div className="bg-white dark:bg-[#181514] border border-rose-100 dark:border-stone-800 rounded-2xl p-6 shadow-2xs min-h-[120px] flex items-center justify-center">
-              <p className="text-sm sm:text-base text-stone-800 dark:text-stone-100 leading-relaxed font-serif italic text-center px-1">
-                “{currentLoveNote}”
+            {/* Şık Tipografik Not Alanı */}
+            <div className="relative bg-white dark:bg-[#231F1E] border border-rose-100/50 dark:border-stone-800/80 rounded-2xl p-6 shadow-xs min-h-[130px] flex items-center justify-center">
+              <p className="text-sm sm:text-base text-stone-700 dark:text-stone-300 leading-relaxed font-serif italic text-center">
+                "{currentLoveNote}"
               </p>
             </div>
 
