@@ -62,8 +62,6 @@ export default function App() {
   const [selections, setSelections] = useState({});
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  const [showRules, setShowRules] = useState(false);
-  const [showForbidden, setShowForbidden] = useState(false);
   const [activeMeal, setActiveMeal] = useState(getCurrentMealByHour());
 
   // Kilo Takip Verileri
@@ -73,7 +71,7 @@ export default function App() {
   const [inputDate, setInputDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [savingWeight, setSavingWeight] = useState(false);
 
-  // Karanlık Mod & PWA Status Bar Yönetimi
+  // Karanlık Mod
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem("theme");
     if (saved) return saved === "dark";
@@ -81,8 +79,6 @@ export default function App() {
   });
 
   useEffect(() => {
-    const themeColor = isDark ? "#181514" : "#FAF7F5";
-    
     if (isDark) {
       document.documentElement.classList.add("dark");
       localStorage.setItem("theme", "dark");
@@ -90,15 +86,6 @@ export default function App() {
       document.documentElement.classList.remove("dark");
       localStorage.setItem("theme", "light");
     }
-
-    // PWA Mobil Status Bar Rengi Güncelleme (Android & iOS Safari)
-    let metaTheme = document.querySelector('meta[name="theme-color"]');
-    if (!metaTheme) {
-      metaTheme = document.createElement("meta");
-      metaTheme.setAttribute("name", "theme-color");
-      document.head.appendChild(metaTheme);
-    }
-    metaTheme.setAttribute("content", themeColor);
   }, [isDark]);
 
   const [email, setEmail] = useState("");
@@ -394,7 +381,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 1. DÜZENLEME: Sola Yaslı Aksiyon Butonları (Kilo, Yasaklar, Kurallar) */}
+        {/* Sola Yaslı Buton Grubu: Kilo + Yasaklar + Kurallar */}
         <div className="mt-3 flex items-center justify-start gap-1.5">
           <button
             onClick={() => setActiveMeal("weight")}
@@ -409,18 +396,26 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setShowForbidden(true)}
-            className="flex items-center gap-1 text-[11px] font-semibold text-stone-600 dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-[#231F1E] border border-stone-200/80 dark:border-stone-800 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
+            onClick={() => setActiveMeal("forbidden")}
+            className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95 ${
+              activeMeal === "forbidden"
+                ? "bg-rose-500 text-white border border-rose-500 shadow-rose-500/25"
+                : "text-stone-600 dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-[#231F1E] border border-stone-200/80 dark:border-stone-800"
+            }`}
           >
-            <Ban size={11} className="text-rose-500" />
+            <Ban size={11} className={activeMeal === "forbidden" ? "text-white" : "text-rose-500"} />
             <span>Yasaklar</span>
           </button>
 
           <button
-            onClick={() => setShowRules(true)}
-            className="flex items-center gap-1 text-[11px] font-semibold text-stone-500 dark:text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-[#231F1E] border border-stone-200/80 dark:border-stone-800 px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95"
+            onClick={() => setActiveMeal("rules")}
+            className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95 ${
+              activeMeal === "rules"
+                ? "bg-rose-500 text-white border border-rose-500 shadow-rose-500/25"
+                : "text-stone-600 dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-[#231F1E] border border-stone-200/80 dark:border-stone-800"
+            }`}
           >
-            <BookOpen size={11} className="text-rose-400" />
+            <BookOpen size={11} className={activeMeal === "rules" ? "text-white" : "text-rose-400"} />
             <span>Kurallar</span>
           </button>
         </div>
@@ -429,8 +424,8 @@ export default function App() {
       {/* Ana İçerik Alanı */}
       <main className="px-5 pt-2 flex-1">
         
-        {/* KİLO TAKİBİ KARTI */}
-        {activeMeal === "weight" ? (
+        {/* 1. KİLO TAKİBİ KARTI */}
+        {activeMeal === "weight" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-3">
@@ -580,81 +575,153 @@ export default function App() {
               )}
             </div>
           </section>
-        ) : (
-          /* 2. DÜZENLEME: STANDART ÖĞÜN KARTI (Örnek Butonu Başlığın Sağında & Not Kart Genişliğinde) */
-          selectedMealData && (
-            <section 
-              className={`bg-white dark:bg-[#231F1E] rounded-3xl p-5 border transition-all duration-200 shadow-2xs ${
-                isSelectedMealDone 
-                  ? "border-rose-200 dark:border-rose-900/50 shadow-rose-950/5" 
-                  : "border-stone-100 dark:border-stone-800/80"
-              }`}
-            >
-              {/* Kart Üst Alanı */}
-              <div className="mb-3.5 space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${
-                    isSelectedMealDone 
-                      ? "bg-rose-500 text-white shadow-xs shadow-rose-500/30" 
-                      : "bg-stone-50 dark:bg-stone-800/60 text-stone-500 dark:text-stone-400"
-                  }`}>
-                    {React.createElement(selectedMealIcon, { size: 19 })}
-                  </div>
+        )}
 
-                  {/* Başlık ve Yanındaki Örnek Butonu */}
-                  <div className="flex items-center gap-2 flex-wrap min-w-0">
-                    <h2 className="font-extrabold text-stone-800 dark:text-stone-100 text-base tracking-tight">
-                      {selectedMealData.title}
-                    </h2>
-                    
-                    {selectedMealData.image && (
-                      <button
-                        onClick={() => setPreviewImage(selectedMealData.image)}
-                        className="inline-flex items-center gap-1 bg-stone-50 dark:bg-stone-800/80 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-stone-600 dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 border border-stone-200/80 dark:border-stone-700/80 hover:border-rose-200 px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all active:scale-95"
+        {/* 2. YASAKLAR KARTI (Modal yerine Doğrudan Kart) */}
+        {activeMeal === "forbidden" && (
+          <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
+            <div className="flex items-center gap-3 pb-2 border-b border-stone-100 dark:border-stone-800/80">
+              <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center">
+                <Ban size={19} />
+              </div>
+              <div>
+                <h2 className="font-extrabold text-stone-800 dark:text-stone-100 text-base tracking-tight">
+                  Uzak Durulacaklar
+                </h2>
+                <p className="text-[11px] text-stone-400 dark:text-stone-500 leading-tight mt-0.5">
+                  Diyet sürecinde tüketilmemesi gereken gıdalar
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3.5">
+              {(dietConfig.forbidden || DEFAULT_FORBIDDEN).map((group, gIdx) => (
+                <div 
+                  key={gIdx} 
+                  className="bg-[#FAF7F5]/80 dark:bg-[#181514]/70 border border-stone-200/60 dark:border-stone-800/80 rounded-2xl p-3.5 space-y-2.5"
+                >
+                  <h3 className="font-bold text-rose-600 dark:text-rose-400 text-xs uppercase tracking-wide">
+                    {group.category}
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {group.items.map((item, iIdx) => (
+                      <span
+                        key={iIdx}
+                        className="inline-flex items-center gap-1.5 bg-white dark:bg-[#241F1D] border border-stone-200/80 dark:border-stone-700/70 text-stone-700 dark:text-stone-200 px-2.5 py-1 rounded-xl text-xs font-medium shadow-2xs"
                       >
-                        <Camera size={11} className="text-rose-500 dark:text-rose-400" />
-                        <span>Örnek</span>
-                      </button>
-                    )}
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                        {item}
+                      </span>
+                    ))}
                   </div>
                 </div>
+              ))}
+            </div>
+          </section>
+        )}
 
-                {/* Kart Genişliğinde Açıklama / Not Yazısı */}
-                {selectedMealData.note && (
-                  <p className="text-[11px] text-stone-400 dark:text-stone-500 leading-relaxed pl-1 w-full">
-                    {selectedMealData.note}
-                  </p>
-                )}
+        {/* 3. KURALLAR KARTI (Modal yerine Doğrudan Kart) */}
+        {activeMeal === "rules" && (
+          <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
+            <div className="flex items-center gap-3 pb-2 border-b border-stone-100 dark:border-stone-800/80">
+              <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center">
+                <BookOpen size={19} />
               </div>
+              <div>
+                <h2 className="font-extrabold text-stone-800 dark:text-stone-100 text-base tracking-tight">
+                  Diyet Prensipleri
+                </h2>
+                <p className="text-[11px] text-stone-400 dark:text-stone-500 leading-tight mt-0.5">
+                  Beslenme düzeninde dikkat edilmesi gereken kurallar
+                </p>
+              </div>
+            </div>
 
-              {/* Seçenekler */}
-              <div className="space-y-2.5 pt-1">
-                {selectedMealData.options.map((opt, idx) => {
-                  const isSelected = selections[selectedMealData.id] === idx;
-                  return (
-                    <div
-                      key={idx}
-                      onClick={() => handleSelect(selectedMealData.id, idx)}
-                      className={`cursor-pointer text-xs p-3.5 rounded-2xl border transition-all duration-150 flex items-start gap-3 ${
-                        isSelected
-                          ? "bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/50 text-rose-950 dark:text-rose-100 font-semibold shadow-2xs"
-                          : "bg-[#FAF7F5]/50 dark:bg-[#1C1817]/60 border-stone-100 dark:border-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-[#282220]"
-                      }`}
+            <ul className="text-xs text-stone-700 dark:text-stone-300 space-y-2.5">
+              {dietConfig.warnings.map((w, idx) => (
+                <li 
+                  key={idx} 
+                  className="bg-[#FAF7F5]/80 dark:bg-[#181514]/70 border border-stone-100 dark:border-stone-800/80 rounded-2xl p-3.5 flex items-start gap-3 leading-relaxed"
+                >
+                  <span className="w-2 h-2 rounded-full bg-rose-500 mt-1.5 shrink-0" />
+                  <span>{w}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* 4. STANDART ÖĞÜNLER (Sabah, Öğle, Ara, Akşam) */}
+        {!["weight", "forbidden", "rules"].includes(activeMeal) && selectedMealData && (
+          <section 
+            className={`bg-white dark:bg-[#231F1E] rounded-3xl p-5 border transition-all duration-200 shadow-2xs ${
+              isSelectedMealDone 
+                ? "border-rose-200 dark:border-rose-900/50 shadow-rose-950/5" 
+                : "border-stone-100 dark:border-stone-800/80"
+            }`}
+          >
+            {/* Kart Üst Alanı */}
+            <div className="mb-3.5 space-y-2">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${
+                  isSelectedMealDone 
+                    ? "bg-rose-500 text-white shadow-xs shadow-rose-500/30" 
+                    : "bg-stone-50 dark:bg-stone-800/60 text-stone-500 dark:text-stone-400"
+                }`}>
+                  {React.createElement(selectedMealIcon, { size: 19 })}
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                  <h2 className="font-extrabold text-stone-800 dark:text-stone-100 text-base tracking-tight">
+                    {selectedMealData.title}
+                  </h2>
+                  
+                  {selectedMealData.image && (
+                    <button
+                      onClick={() => setPreviewImage(selectedMealData.image)}
+                      className="inline-flex items-center gap-1 bg-stone-50 dark:bg-stone-800/80 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-stone-600 dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 border border-stone-200/80 dark:border-stone-700/80 hover:border-rose-200 px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all active:scale-95"
                     >
-                      <div className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 transition-all ${
-                        isSelected 
-                          ? "border-rose-500 bg-rose-500 text-white shadow-2xs" 
-                          : "border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800"
-                      }`}>
-                        {isSelected && <Check size={11} strokeWidth={3} />}
-                      </div>
-                      <span className="leading-snug pt-0.2">{opt}</span>
-                    </div>
-                  );
-                })}
+                      <Camera size={11} className="text-rose-500 dark:text-rose-400" />
+                      <span>Örnek</span>
+                    </button>
+                  )}
+                </div>
               </div>
-            </section>
-          )
+
+              {selectedMealData.note && (
+                <p className="text-[11px] text-stone-400 dark:text-stone-500 leading-relaxed pl-1 w-full">
+                  {selectedMealData.note}
+                </p>
+              )}
+            </div>
+
+            {/* Öğün Seçenekleri */}
+            <div className="space-y-2.5 pt-1">
+              {selectedMealData.options.map((opt, idx) => {
+                const isSelected = selections[selectedMealData.id] === idx;
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => handleSelect(selectedMealData.id, idx)}
+                    className={`cursor-pointer text-xs p-3.5 rounded-2xl border transition-all duration-150 flex items-start gap-3 ${
+                      isSelected
+                        ? "bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/50 text-rose-950 dark:text-rose-100 font-semibold shadow-2xs"
+                        : "bg-[#FAF7F5]/50 dark:bg-[#1C1817]/60 border-stone-100 dark:border-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-[#282220]"
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 transition-all ${
+                      isSelected 
+                        ? "border-rose-500 bg-rose-500 text-white shadow-2xs" 
+                        : "border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800"
+                    }`}>
+                      {isSelected && <Check size={11} strokeWidth={3} />}
+                    </div>
+                    <span className="leading-snug pt-0.2">{opt}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         )}
       </main>
 
@@ -692,91 +759,6 @@ export default function App() {
           );
         })}
       </nav>
-
-      {/* Yasaklar Modali */}
-      {showForbidden && (
-        <div 
-          className="fixed inset-0 z-50 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs flex items-center justify-center p-6 animate-in fade-in duration-200"
-          onClick={() => setShowForbidden(false)}
-        >
-          <div 
-            className="bg-white dark:bg-[#231F1E] rounded-3xl p-6 max-w-xs sm:max-w-sm w-full max-h-[80vh] flex flex-col shadow-2xl border border-stone-100 dark:border-stone-800 space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center pb-2 border-b border-stone-100 dark:border-stone-800 shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center text-rose-500 dark:text-rose-400">
-                  <Ban size={13} />
-                </div>
-                <span className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-200">
-                  Uzak Durulacaklar
-                </span>
-              </div>
-              <button 
-                onClick={() => setShowForbidden(false)} 
-                className="w-7 h-7 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 flex items-center justify-center transition-colors"
-              >
-                <X size={15} />
-              </button>
-            </div>
-
-            <div className="overflow-y-auto space-y-3.5 pr-1 text-xs">
-              {(dietConfig.forbidden || DEFAULT_FORBIDDEN).map((group, gIdx) => (
-                <div 
-                  key={gIdx} 
-                  className="bg-stone-50/70 dark:bg-[#1C1817] border border-stone-200/60 dark:border-stone-800/80 rounded-2xl p-3.5 space-y-2"
-                >
-                  <h3 className="font-bold text-rose-600 dark:text-rose-400 text-[11px] uppercase tracking-wide">
-                    {group.category}
-                  </h3>
-                  <div className="flex flex-wrap gap-1.5">
-                    {group.items.map((item, iIdx) => (
-                      <span
-                        key={iIdx}
-                        className="inline-flex items-center gap-1.5 bg-white dark:bg-[#282220] border border-stone-200/80 dark:border-stone-700/70 text-stone-700 dark:text-stone-300 px-2.5 py-1 rounded-xl text-[11px] font-medium shadow-2xs"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Kurallar Modali */}
-      {showRules && (
-        <div 
-          className="fixed inset-0 z-50 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs flex items-center justify-center p-6 animate-in fade-in duration-200"
-          onClick={() => setShowRules(false)}
-        >
-          <div 
-            className="bg-white dark:bg-[#231F1E] rounded-3xl p-6 max-w-xs w-full shadow-2xl border border-stone-100 dark:border-stone-800 space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center pb-2 border-b border-stone-100 dark:border-stone-800">
-              <span className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-200">Diyet Prensipleri</span>
-              <button 
-                onClick={() => setShowRules(false)} 
-                className="w-7 h-7 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 flex items-center justify-center transition-colors"
-              >
-                <X size={15} />
-              </button>
-            </div>
-            <ul className="text-xs text-stone-600 dark:text-stone-300 space-y-3 leading-relaxed">
-              {dietConfig.warnings.map((w, idx) => (
-                <li key={idx} className="flex items-start gap-2.5">
-                  <span className="text-rose-500 text-sm leading-none">•</span>
-                  <span>{w}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
 
       {/* Admin Panel Modal */}
       {isAdminOpen && (
