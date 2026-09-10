@@ -595,7 +595,8 @@ export default function App() {
       </header>
 
       {/* Ana İçerik Kartı */}
-      <main className="px-5 pt-2 flex flex-col">
+      <div className="relative">
+        <main className="px-5 pt-2 flex flex-col">
         {/* 1. KİLO TAKİBİ */}
         {activeMeal === "weight" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
@@ -884,11 +885,11 @@ export default function App() {
             </div>
           </section>
         )}
-      </main>
+        </main>
 
-      {/* ŞIK MENÜ: Kartın Bittiği Yerde Doğal Akışta, Arkası Kapsül Tasarımlı */}
-      <div className="px-5 pt-2 pb-12 w-full">
-        <nav className="w-full bg-white dark:bg-[#231F1E] border border-stone-100 dark:border-stone-800 shadow-md shadow-stone-200/50 dark:shadow-black/20 rounded-[28px] p-2 flex items-center justify-between">
+        {/* ALT MENÜ: İÇERİĞİN ÜZERİNDE, İÇERİKLE BİRLİKTE KAYAR */}
+        <div className="absolute left-0 right-0 bottom-5 px-5 z-20">
+          <nav className="w-full bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-lg shadow-stone-200/50 dark:shadow-black/30 rounded-[28px] p-2 flex items-center justify-between">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = activeMeal === item.id;
@@ -920,7 +921,8 @@ export default function App() {
               </button>
             );
           })}
-        </nav>
+          </nav>
+        </div>
       </div>
 
       {/* ÇOK YAVAŞ, AKICI VE KESİNTİSİZ SÜZÜLEN KALP */}
