@@ -197,7 +197,7 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [user, isWife]);
 
-  // Kesintisiz, Yavaş ve Seken Kalp Animasyonu
+  // Kesintisiz, Yavaş ve Seken Kalp Motoru
   useEffect(() => {
     if (heartMode !== "wandering") return;
 
@@ -208,13 +208,14 @@ export default function App() {
     let x = Math.random() * (screenW - 100) + 20;
     let y = Math.random() * (screenH - 260) + 80;
 
-    const speed = 40;
+    // Yavaş ve yumuşak süzülme hızı
+    const speed = 35;
     const angle = Math.random() * 2 * Math.PI;
     let vx = Math.cos(angle) * speed;
     let vy = Math.sin(angle) * speed;
 
-    if (Math.abs(vx) < 18) vx = vx < 0 ? -22 : 22;
-    if (Math.abs(vy) < 18) vy = vy < 0 ? -22 : 22;
+    if (Math.abs(vx) < 15) vx = vx < 0 ? -20 : 20;
+    if (Math.abs(vy) < 15) vy = vy < 0 ? -20 : 20;
 
     let lastTime = performance.now();
 
@@ -447,7 +448,7 @@ export default function App() {
   const isSelectedMealDone = selectedMealData && selections[selectedMealData.id] !== undefined;
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden pb-10">
+    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden pb-12">
       
       {/* Özel Animasyonlar */}
       <style>{`
@@ -579,8 +580,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* Ana İçerik Alanı: Kart ve Alt Menü Birlikte Sayfa Akışında */}
-      <main className="px-5 pt-2 space-y-5">
+      {/* Ana İçerik Alanı: Kart ve Alt Menü Doğal Sayfa Akışında */}
+      <main className="px-5 pt-2 space-y-4">
         
         {/* 1. KİLO TAKİBİ KARTI */}
         {activeMeal === "weight" && (
@@ -878,21 +879,15 @@ export default function App() {
           </section>
         )}
 
-        {/* 5. ALT MENÜ: KARTIN HEMEN ALTINDA, DOĞAL SAYFA AKIŞINDA (KESİNLİKLE SABİT DEĞİL) */}
-        <div 
-          style={{ position: "relative", bottom: "auto", left: "auto", transform: "none" }}
-          className="w-full pt-1 pb-4"
-        >
-          <nav 
-            style={{ position: "relative" }}
-            className="w-full bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around z-20 transition-colors duration-300"
-          >
-            {/* Sabitlenen Kalp: Öğle ile Ara Arasında (left-1/2) */}
+        {/* 5. ALT MENÜ: KARTIN HEMEN ALTINDA DOĞAL AKIŞTA (ASLA FIXED DEĞİL) */}
+        <div className="w-full pt-1">
+          <nav className="w-full bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around z-20 transition-colors duration-300 relative">
+            
+            {/* Sabit Kalp: Öğle ile Ara Arasında (left-1/2) */}
             {heartMode === "docked" && (
               <button
                 onClick={handleHeartClick}
-                style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)" }}
-                className="w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md shadow-rose-500/40 border-2 border-white dark:border-[#231F1E] active:scale-90 transition-transform z-30 animate-in zoom-in-75 duration-300 group"
+                className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md shadow-rose-500/40 border-2 border-white dark:border-[#231F1E] active:scale-90 transition-transform z-30 animate-in zoom-in-75 duration-300 group"
                 title="Günün Sevgi Notunu Yeniden Aç"
               >
                 <Heart size={13} className="fill-white group-hover:scale-110 transition-transform" />
@@ -979,7 +974,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Kapat */}
+            {/* Kapat Butonu */}
             <button
               onClick={() => setShowLetterModal(false)}
               className="absolute top-3.5 right-3.5 w-7 h-7 bg-white dark:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors shadow-2xs"
