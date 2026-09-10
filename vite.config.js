@@ -14,8 +14,8 @@ export default defineConfig({
         name: 'Diyet Takip Sistemi',
         short_name: 'Diyetim',
         description: 'Günlük Diyet Seçim ve Takip Uygulaması',
-        theme_color: '#0f172a',
-        background_color: '#f8fafc',
+        theme_color: '#181514',
+        background_color: '#181514',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
