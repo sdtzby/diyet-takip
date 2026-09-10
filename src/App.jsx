@@ -79,8 +79,8 @@ export default function App() {
   const [inputDate, setInputDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [savingWeight, setSavingWeight] = useState(false);
 
-  // Sürpriz Aşk Notu: 'hidden' | 'wandering' | 'docked'
-  const [heartMode, setHeartMode] = useState("hidden");
+  // Sürpriz Aşk Notu
+  const [heartMode, setHeartMode] = useState("hidden"); // 'hidden' | 'wandering' | 'docked'
   const [showLetterModal, setShowLetterModal] = useState(false);
   const [currentLoveNote, setCurrentLoveNote] = useState("");
 
@@ -197,51 +197,57 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [user, isWife]);
 
-  // 1. DÜZENLEME: Kesintisiz Süzülen ve Duvarlardan Seken Kalp Motoru (60 FPS)
+  // 1. DÜZENLEME: Kesintisiz Süzülen, Duvarlardan Seken ve YAVAŞ Kalp Hareketi
   useEffect(() => {
     if (heartMode !== "wandering") return;
 
-    let x = Math.random() * (window.innerWidth - 90) + 20;
-    let y = Math.random() * (window.innerHeight - 260) + 80;
-    
-    // Sürekli hareket hızı ve rastgele başlangıç açısı
-    const speed = 1.6;
+    const heartSize = 52;
+    const screenW = window.innerWidth;
+    const screenH = window.innerHeight;
+
+    let x = Math.random() * (screenW - 100) + 20;
+    let y = Math.random() * (screenH - 260) + 80;
+
+    // Saniyede ~42 piksel hız: Çok yavaş, duraksamayan ve nazik bir süzülme
+    const speed = 42;
     const angle = Math.random() * 2 * Math.PI;
     let vx = Math.cos(angle) * speed;
     let vy = Math.sin(angle) * speed;
-    if (Math.abs(vx) < 0.7) vx = vx < 0 ? -1.0 : 1.0;
-    if (Math.abs(vy) < 0.7) vy = vy < 0 ? -1.0 : 1.0;
 
-    const heartSize = 52;
+    if (Math.abs(vx) < 18) vx = vx < 0 ? -22 : 22;
+    if (Math.abs(vy) < 18) vy = vy < 0 ? -22 : 22;
 
-    const loop = () => {
-      const screenW = window.innerWidth;
-      const screenH = window.innerHeight;
+    let lastTime = performance.now();
 
+    const loop = (now) => {
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      const currentW = window.innerWidth;
+      const currentH = window.innerHeight;
       const minX = 12;
-      const maxX = screenW - heartSize - 12;
+      const maxX = currentW - heartSize - 12;
       const minY = 65;
-      const maxY = screenH - heartSize - 75;
+      const maxY = currentH - heartSize - 80;
 
-      x += vx;
-      y += vy;
+      x += vx * dt;
+      y += vy * dt;
 
-      // Sol ve sağ duvardan sekme
+      // Duvarlardan yumuşakça sekme
       if (x <= minX) {
         x = minX;
-        vx = -vx;
+        vx = Math.abs(vx);
       } else if (x >= maxX) {
         x = maxX;
-        vx = -vx;
+        vx = -Math.abs(vx);
       }
 
-      // Üst ve alt duvardan sekme
       if (y <= minY) {
         y = minY;
-        vy = -vy;
+        vy = Math.abs(vy);
       } else if (y >= maxY) {
         y = maxY;
-        vy = -vy;
+        vy = -Math.abs(vy);
       }
 
       if (heartRef.current) {
@@ -258,7 +264,7 @@ export default function App() {
     };
   }, [heartMode]);
 
-  // Kalbe Tıklandığında Notu Aç ve Menü Üzerine Sabitle
+  // Kalbe Tıklandığında Notu Aç ve Sabitle
   const handleHeartClick = async () => {
     try {
       const metaRef = doc(db, "logs", user.uid, "meta", "love_state");
@@ -445,7 +451,7 @@ export default function App() {
   const isSelectedMealDone = selectedMealData && selections[selectedMealData.id] !== undefined;
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] pb-4 flex flex-col font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden">
+    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden pb-8">
       
       {/* Özel Animasyonlar */}
       <style>{`
@@ -578,7 +584,7 @@ export default function App() {
       </header>
 
       {/* Ana İçerik Alanı */}
-      <main className="px-5 pt-2 flex-1">
+      <main className="px-5 pt-2">
         
         {/* 1. KİLO TAKİBİ KARTI */}
         {activeMeal === "weight" && (
@@ -877,54 +883,56 @@ export default function App() {
         )}
       </main>
 
-      {/* 3. DÜZENLEME: SAYFAYLA BİRLİKTE AKAN ALT MENÜ (SABİT DEĞİL) */}
-      <nav className="w-[calc(100%-2.5rem)] max-w-sm mx-auto bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around z-30 transition-colors duration-300 relative mt-5 mb-6 shrink-0">
-        
-        {/* 2. DÜZENLEME: SABİTLENEN KALP TAM ÖĞLE İLE ARA ARASINDA (left-1/2) */}
-        {heartMode === "docked" && (
-          <button
-            onClick={handleHeartClick}
-            className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md shadow-rose-500/40 border-2 border-white dark:border-[#231F1E] active:scale-90 transition-transform z-40 animate-in zoom-in-75 duration-300 group"
-            title="Günün Sevgi Notunu Yeniden Aç"
-          >
-            <Heart size={13} className="fill-white group-hover:scale-110 transition-transform" />
-          </button>
-        )}
-
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeMeal === item.id;
-          const isDone = selections[item.id] !== undefined;
-
-          return (
+      {/* 3. DÜZENLEME: SAYFAYLA BİRLİKTE KAYAN ALT MENÜ (SABİT EN ALTTA DEĞİL, KARTIN ALTINDA DOĞAL AKIŞTA) */}
+      <div className="px-5 pt-5 pb-6">
+        <nav className="w-full max-w-sm mx-auto bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around z-30 transition-colors duration-300 relative">
+          
+          {/* 2. DÜZENLEME: SABİT KALBİN YERİ TAM ÖĞLE İLE ARA ARASINDA (50% MERKEZİNDE) */}
+          {heartMode === "docked" && (
             <button
-              key={item.id}
-              onClick={() => setActiveMeal(item.id)}
-              className={`relative flex flex-col items-center justify-center py-2 px-4 rounded-2xl transition-all duration-200 active:scale-95 ${
-                isActive 
-                  ? "bg-rose-500 text-white shadow-sm shadow-rose-500/30" 
-                  : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
-              }`}
+              onClick={handleHeartClick}
+              className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md shadow-rose-500/40 border-2 border-white dark:border-[#231F1E] active:scale-90 transition-transform z-40 animate-in zoom-in-75 duration-300 group"
+              title="Günün Sevgi Notunu Yeniden Aç"
             >
-              <div className="relative">
-                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                {isDone && (
-                  <span className={`absolute -top-1 -right-1.5 w-2 h-2 rounded-full ring-2 ${
-                    isActive ? "bg-emerald-300 ring-rose-500" : "bg-emerald-500 ring-white dark:ring-[#231F1E]"
-                  }`} />
-                )}
-              </div>
-              <span className={`text-[11px] tracking-tight mt-1 font-semibold ${
-                isActive ? "text-white" : "text-stone-500 dark:text-stone-400"
-              }`}>
-                {item.label}
-              </span>
+              <Heart size={13} className="fill-white group-hover:scale-110 transition-transform" />
             </button>
-          );
-        })}
-      </nav>
+          )}
 
-      {/* 1. DÜZENLEME DOM: SÜREKLİ SÜZÜLEN UÇAN KALP */}
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeMeal === item.id;
+            const isDone = selections[item.id] !== undefined;
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveMeal(item.id)}
+                className={`relative flex flex-col items-center justify-center py-2 px-4 rounded-2xl transition-all duration-200 active:scale-95 ${
+                  isActive 
+                    ? "bg-rose-500 text-white shadow-sm shadow-rose-500/30" 
+                    : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+                }`}
+              >
+                <div className="relative">
+                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                  {isDone && (
+                    <span className={`absolute -top-1 -right-1.5 w-2 h-2 rounded-full ring-2 ${
+                      isActive ? "bg-emerald-300 ring-rose-500" : "bg-emerald-500 ring-white dark:ring-[#231F1E]"
+                    }`} />
+                  )}
+                </div>
+                <span className={`text-[11px] tracking-tight mt-1 font-semibold ${
+                  isActive ? "text-white" : "text-stone-500 dark:text-stone-400"
+                }`}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* 1. DÜZENLEME: KESİNTİSİZ SÜZÜLEN VE YAVAŞÇA SEKME YAPAN KALP */}
       {heartMode === "wandering" && (
         <div 
           ref={heartRef}
@@ -945,7 +953,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 4. DÜZENLEME: ŞIK VE SADE AŞK MEKTUBU MODALI (Karanlık Modla Uyumlu) */}
+      {/* MEKTUP MODALI */}
       {showLetterModal && (
         <div 
           className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in duration-200"
@@ -987,7 +995,7 @@ export default function App() {
               </h3>
             </div>
 
-            {/* Temiz & Zarif Not Sayfası (Karanlık Mod Kusursuz) */}
+            {/* Mektup Sayfası */}
             <div className="bg-white dark:bg-[#181514] border border-rose-100 dark:border-stone-800 rounded-2xl p-6 shadow-2xs min-h-[120px] flex items-center justify-center">
               <p className="text-sm sm:text-base text-stone-800 dark:text-stone-100 leading-relaxed font-serif italic text-center px-1">
                 “{currentLoveNote}”
