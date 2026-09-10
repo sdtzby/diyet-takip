@@ -577,7 +577,7 @@ export default function App() {
           </section>
         )}
 
-        {/* 2. YASAKLAR KARTI: 2 Sütunlu Dengeli ve Okunaklı Izgara Düzeni */}
+        {/* 2. YASAKLAR KARTI: Tek Sütunlu, Geniş ve Otomatik Alfabetik Sıralı */}
         {activeMeal === "forbidden" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800/80">
@@ -596,35 +596,42 @@ export default function App() {
               </div>
             </div>
 
-            <div className="space-y-3.5">
-              {(dietConfig.forbidden || DEFAULT_FORBIDDEN).map((group, gIdx) => (
-                <div 
-                  key={gIdx} 
-                  className="bg-[#FAF7F5]/70 dark:bg-[#1C1817]/60 border border-stone-200/60 dark:border-stone-800/70 rounded-2xl p-3.5 space-y-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-rose-600 dark:text-rose-400 text-xs tracking-wide">
-                      {group.category}
-                    </h3>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400">
-                      {group.items.length} ürün
-                    </span>
-                  </div>
+            <div className="space-y-4">
+              {(dietConfig.forbidden || DEFAULT_FORBIDDEN).map((group, gIdx) => {
+                // Türkçe alfabesine göre otomatik sıralama (A-Z)
+                const sortedItems = [...(group.items || [])].sort((a, b) =>
+                  a.localeCompare(b, "tr")
+                );
 
-                  {/* 2 Sütunlu Okunaklı Ürün Izgarası */}
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {group.items.map((item, iIdx) => (
-                      <div
-                        key={iIdx}
-                        className="bg-white dark:bg-[#231F1E] border border-stone-200/70 dark:border-stone-800 px-2.5 py-2 rounded-xl text-xs text-stone-700 dark:text-stone-200 font-medium shadow-2xs flex items-center gap-2"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-                        <span className="truncate">{item}</span>
-                      </div>
-                    ))}
+                return (
+                  <div 
+                    key={gIdx} 
+                    className="bg-[#FAF7F5]/70 dark:bg-[#1C1817]/60 border border-stone-200/60 dark:border-stone-800/70 rounded-2xl p-3.5 space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-rose-600 dark:text-rose-400 text-xs tracking-wide">
+                        {group.category}
+                      </h3>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400">
+                        {sortedItems.length} ürün
+                      </span>
+                    </div>
+
+                    {/* Tek Sütunlu, Kırpılmayan ve Rahat Okunan Liste */}
+                    <div className="space-y-1.5">
+                      {sortedItems.map((item, iIdx) => (
+                        <div
+                          key={iIdx}
+                          className="bg-white dark:bg-[#231F1E] border border-stone-200/70 dark:border-stone-800 px-3.5 py-2.5 rounded-xl text-xs text-stone-700 dark:text-stone-200 font-medium shadow-2xs flex items-center gap-2.5"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                          <span className="leading-snug">{item}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
@@ -648,7 +655,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Numaralandırılmış Okunaklı Liste */}
             <div className="space-y-2.5">
               {dietConfig.warnings.map((w, idx) => (
                 <div 
@@ -676,7 +682,6 @@ export default function App() {
                 : "border-stone-100 dark:border-stone-800/80"
             }`}
           >
-            {/* Kart Üst Alanı */}
             <div className="mb-3.5 space-y-2">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${
