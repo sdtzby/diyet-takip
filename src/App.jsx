@@ -88,7 +88,7 @@ export default function App() {
   const heartRef = useRef(null);
   const animFrameRef = useRef(null);
 
-  // PWA Önbellek Temizleyici (Değişikliklerin anında yansıması için)
+  // PWA Önbellek Temizleyici
   useEffect(() => {
     if ('caches' in window) {
       caches.keys().then((names) => {
@@ -196,7 +196,7 @@ export default function App() {
     return () => unsubscribe();
   }, [user]);
 
-  // Kalbi Başlat
+  // Sayfa Açıldıktan 5 Saniye Sonra Kalbi Başlat
   useEffect(() => {
     if (!user || !isWife) return;
 
@@ -218,13 +218,11 @@ export default function App() {
     let x = Math.random() * (screenW - 100) + 20;
     let y = Math.random() * (screenH - 260) + 80;
 
-    // Hız iyice düşürüldü (20px/sn) -> Çok yavaş ve zarif hareket
     const speed = 20;
     const angle = Math.random() * 2 * Math.PI;
     let vx = Math.cos(angle) * speed;
     let vy = Math.sin(angle) * speed;
 
-    // Çapraz gitmesi için asgari hız garantisi
     if (Math.abs(vx) < 10) vx = vx < 0 ? -12 : 12;
     if (Math.abs(vy) < 10) vy = vy < 0 ? -12 : 12;
 
@@ -244,7 +242,6 @@ export default function App() {
       x += vx * dt;
       y += vy * dt;
 
-      // Duvarlardan sekme
       if (x <= minX) {
         x = minX;
         vx = Math.abs(vx);
@@ -460,8 +457,9 @@ export default function App() {
   const selectedMealIcon = MEAL_ICONS[selectedMealData?.id] || Sparkles;
   const isSelectedMealDone = selectedMealData && selections[selectedMealData.id] !== undefined;
 
+  // Ana taşıyıcıda zorlayıcı flex yapıları tamamen kaldırıldı
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden pb-12">
+    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden">
       
       <style>{`
         @keyframes letterUnfold {
@@ -543,8 +541,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Buton Grubu: Kilo + Yasaklar + Kurallar + SABİT KALP */}
-        <div className="mt-3 flex items-center justify-start gap-1.5 relative w-full">
+        {/* Aksiyon Butonları & Kurallar'ın Karşısında Sabitlenen Kalp */}
+        <div className="mt-3 flex items-center justify-start gap-1.5 w-full relative">
           <button
             onClick={() => setActiveMeal("weight")}
             className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95 ${
@@ -581,11 +579,11 @@ export default function App() {
             <span>Kurallar</span>
           </button>
 
-          {/* DÜZENLEME 2: Mektup kapandıktan sonra Sabit Kalp, Kurallar butonunun sağ hizasında durur */}
+          {/* Sürpriz Kalp Tam Burada ("Kurallar"ın karşısına sağa yaslanır) */}
           {heartMode === "docked" && (
             <button
               onClick={handleHeartClick}
-              className="ml-auto w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-sm shadow-rose-500/40 active:scale-90 transition-transform animate-in fade-in zoom-in duration-300"
+              className="ml-auto flex items-center justify-center w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full shadow-sm shadow-rose-500/40 border border-rose-300 dark:border-rose-900 active:scale-90 transition-transform animate-in zoom-in"
               title="Günün Sevgi Notunu Yeniden Aç"
             >
               <Heart size={13} className="fill-white" />
@@ -594,45 +592,9 @@ export default function App() {
         </div>
       </header>
 
-      {/* DÜZENLEME 3: MENÜ VE KART DOĞAL AKIŞTA - HİÇBİR YERE SABİTLİ DEĞİL */}
-      <main className="px-5 pt-3 pb-8 flex flex-col gap-4">
-        
-        {/* MENÜ (Sekmeler) KARTLARIN TAM ÜZERİNE TAŞINDI. AŞAĞI KAYDIRDIKÇA YUKARI KAYBOLUR */}
-        <nav className="w-full bg-white dark:bg-[#231F1E] border border-stone-100 dark:border-stone-800 shadow-sm rounded-2xl p-1.5 flex items-center justify-around shrink-0 transition-colors duration-300">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeMeal === item.id;
-            const isDone = selections[item.id] !== undefined;
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveMeal(item.id)}
-                className={`relative flex flex-col items-center justify-center py-2 px-4 rounded-xl transition-all duration-200 active:scale-95 ${
-                  isActive 
-                    ? "bg-rose-500 text-white shadow-xs shadow-rose-500/30" 
-                    : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
-                }`}
-              >
-                <div className="relative">
-                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                  {isDone && (
-                    <span className={`absolute -top-1 -right-1.5 w-2 h-2 rounded-full ring-2 ${
-                      isActive ? "bg-emerald-300 ring-rose-500" : "bg-emerald-500 ring-white dark:ring-[#231F1E]"
-                    }`} />
-                  )}
-                </div>
-                <span className={`text-[11px] tracking-tight mt-1 font-semibold ${
-                  isActive ? "text-white" : "text-stone-500 dark:text-stone-400"
-                }`}>
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* 1. KİLO TAKİBİ KARTI */}
+      {/* Ana İçerik Kartı */}
+      <main className="px-5 pt-2">
+        {/* 1. KİLO TAKİBİ */}
         {activeMeal === "weight" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
             <div className="flex justify-between items-start">
@@ -922,7 +884,45 @@ export default function App() {
         )}
       </main>
 
-      {/* SÜREKLİ SÜZÜLEN VE YAVAŞÇA SEKME YAPAN KALP */}
+      {/* ALT MENÜ: KARTIN HEMEN ALTINDA DOĞAL SAYFA AKIŞINDA */}
+      {/* Hiçbir yere sabitlenmez, kart bittiği yerde durur, sayfayı kaydırdıkça içerikle birlikte aşağı-yukarı kayar */}
+      <div className="px-5 pt-4 pb-12">
+        <nav className="w-full bg-white dark:bg-[#231F1E] border border-stone-100 dark:border-stone-800 shadow-sm rounded-2xl p-1.5 flex items-center justify-around transition-colors duration-300">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeMeal === item.id;
+            const isDone = selections[item.id] !== undefined;
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveMeal(item.id)}
+                className={`relative flex flex-col items-center justify-center py-2 px-4 rounded-xl transition-all duration-200 active:scale-95 ${
+                  isActive 
+                    ? "bg-rose-500 text-white shadow-xs shadow-rose-500/30" 
+                    : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+                }`}
+              >
+                <div className="relative">
+                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                  {isDone && (
+                    <span className={`absolute -top-1 -right-1.5 w-2 h-2 rounded-full ring-2 ${
+                      isActive ? "bg-emerald-300 ring-rose-500" : "bg-emerald-500 ring-white dark:ring-[#231F1E]"
+                    }`} />
+                  )}
+                </div>
+                <span className={`text-[11px] tracking-tight mt-1 font-semibold ${
+                  isActive ? "text-white" : "text-stone-500 dark:text-stone-400"
+                }`}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* SÜREKLİ SÜZÜLEN KALP */}
       {heartMode === "wandering" && (
         <div 
           ref={heartRef}
@@ -943,7 +943,7 @@ export default function App() {
         </div>
       )}
 
-      {/* ZARİF MEKTUP MODALI */}
+      {/* MEKTUP MODALI */}
       {showLetterModal && (
         <div 
           className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in duration-200"
@@ -991,7 +991,7 @@ export default function App() {
               </h3>
             </div>
 
-            {/* Mektup Sayfası */}
+            {/* Şık ve Ferah Not Sayfası */}
             <div className="bg-white dark:bg-[#181514] border border-rose-100 dark:border-stone-800 rounded-2xl p-6 shadow-2xs min-h-[120px] flex items-center justify-center">
               <p className="text-sm sm:text-base text-stone-800 dark:text-stone-100 leading-relaxed font-serif italic text-center px-1">
                 "{currentLoveNote}"
