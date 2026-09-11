@@ -113,7 +113,7 @@ export default function App() {
   const isAdmin = user && user.uid === ADMIN_UID;
   const isWife = user?.email?.toLowerCase().includes("cigdem") || isAdmin;
 
-  const totalMeals = dietConfig.meals.length;
+  const totalMeals = dietConfig?.meals?.length || 0;
   const completedMeals = Object.keys(selections).filter((k) => selections[k] !== undefined).length;
 
   const getGreeting = () => {
@@ -273,24 +273,15 @@ export default function App() {
       const seenIndices = Array.isArray(data.seenIndices) ? data.seenIndices : [];
 
       let noteToShow = "";
-      let targetIndex = typeof data.todayIndex === "number" ? data.todayIndex : 0;
+      const todayIndex = typeof data.todayIndex === "number" ? data.todayIndex : 0;
 
       if (data.lastSeenDate === todayKey) {
-        noteToShow = notes[targetIndex] || notes[0];
+        noteToShow = notes[todayIndex] || notes[0];
       } else {
-        let availableIndices = notes.map((_, idx) => idx).filter((idx) => !seenIndices.includes(idx));
-        let nextIndex;
-        let nextSeen;
+        const availableIndices = notes.map((_, idx) => idx).filter((idx) => !seenIndices.includes(idx));
+        const nextIndex = availableIndices.length === 0 ? 0 : availableIndices[0];
+        const nextSeen = availableIndices.length === 0 ? [0] : [...seenIndices, nextIndex];
 
-        if (availableIndices.length === 0) {
-          nextIndex = 0;
-          nextSeen = [0];
-        } else {
-          nextIndex = availableIndices[0];
-          nextSeen = [...seenIndices, nextIndex];
-        }
-
-        targetIndex = nextIndex;
         noteToShow = notes[nextIndex];
 
         await setDoc(metaRef, {
@@ -417,7 +408,7 @@ export default function App() {
               <input
                 type="email"
                 required
-                className="w-full bg-stone-50 dark:bg-stone-850 border border-stone-200/80 dark:border-stone-700/80 rounded-2xl px-4 py-3 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400 focus:bg-white dark:focus:bg-[#1c1817] transition-all"
+                className="w-full bg-stone-50 dark:bg-stone-850 border border-stone-200/80 dark:border-stone-700/80 rounded-2xl px-4 py-3 text-xs text-stone-800 dark:text-stone-100 focus:outline-none focus:border-rose-400 focus:bg-white dark:focus:bg-[#1c1817] transition-all"
                 value={email}
                 placeholder="ornek@hesap.com"
                 onChange={(e) => setEmail(e.target.value)}
@@ -428,7 +419,7 @@ export default function App() {
               <input
                 type="password"
                 required
-                className="w-full bg-stone-50 dark:bg-stone-850 border border-stone-200/80 dark:border-stone-700/80 rounded-2xl px-4 py-3 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400 focus:bg-white dark:focus:bg-[#1c1817] transition-all"
+                className="w-full bg-stone-50 dark:bg-stone-850 border border-stone-200/80 dark:border-stone-700/80 rounded-2xl px-4 py-3 text-xs text-stone-800 dark:text-stone-100 focus:outline-none focus:border-rose-400 focus:bg-white dark:focus:bg-[#1c1817] transition-all"
                 value={password}
                 placeholder="••••••••"
                 onChange={(e) => setPassword(e.target.value)}
@@ -446,9 +437,9 @@ export default function App() {
     );
   }
 
-  const selectedMealData = dietConfig.meals.find((m) => m.id === activeMeal);
-  const selectedMealIcon = MEAL_ICONS[selectedMealData?.id] || Sparkles;
-  const isSelectedMealDone = selectedMealData && selections[selectedMealData.id] !== undefined;
+  const selectedMealData = dietConfig?.meals?.find((m) => m.id === activeMeal);
+  const selectedMealIcon = selectedMealData?.id ? MEAL_ICONS[selectedMealData.id] || Sparkles : Sparkles;
+  const isSelectedMealDone = Boolean(selectedMealData && selections[selectedMealData.id] !== undefined);
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden pb-28">
@@ -536,12 +527,12 @@ export default function App() {
           </h1>
 
           <div className="flex items-center gap-1.5 shrink-0" title={`${completedMeals}/${totalMeals} Öğün Tamamlandı`}>
-            {dietConfig.meals.map((meal) => (
+            {dietConfig?.meals?.map((meal) => (
               <div 
                 key={meal.id} 
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${
                   selections[meal.id] !== undefined 
-                    ? "bg-rose-500 scale-110 shadow-xs shadow-rose-500/50" 
+                    ? "bg-rose-500 scale-110 shadow-sm shadow-rose-500/50" 
                     : "bg-stone-200 dark:bg-stone-800"
                 }`} 
               />
@@ -553,7 +544,7 @@ export default function App() {
         <div className="mt-3 flex items-center justify-start gap-1.5 w-full relative">
           <button
             onClick={() => setActiveMeal("weight")}
-            className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95 ${
+            className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm transition-all active:scale-95 ${
               activeMeal === "weight"
                 ? "bg-rose-500 text-white border border-rose-500 shadow-rose-500/25"
                 : "text-stone-600 dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-[#231F1E] border border-stone-200/80 dark:border-stone-800"
@@ -565,7 +556,7 @@ export default function App() {
 
           <button
             onClick={() => setActiveMeal("forbidden")}
-            className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95 ${
+            className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm transition-all active:scale-95 ${
               activeMeal === "forbidden"
                 ? "bg-rose-500 text-white border border-rose-500 shadow-rose-500/25"
                 : "text-stone-600 dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-[#231F1E] border border-stone-200/80 dark:border-stone-800"
@@ -577,7 +568,7 @@ export default function App() {
 
           <button
             onClick={() => setActiveMeal("rules")}
-            className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-2xs transition-all active:scale-95 ${
+            className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm transition-all active:scale-95 ${
               activeMeal === "rules"
                 ? "bg-rose-500 text-white border border-rose-500 shadow-rose-500/25"
                 : "text-stone-600 dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-[#231F1E] border border-stone-200/80 dark:border-stone-800"
@@ -609,7 +600,7 @@ export default function App() {
       <main className="px-5 pt-2">
         {/* 1. KİLO TAKİBİ */}
         {activeMeal === "weight" && (
-          <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
+          <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-sm transition-all duration-200 space-y-4">
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-xs shadow-rose-500/30">
@@ -668,7 +659,7 @@ export default function App() {
                   required
                   value={inputDate}
                   onChange={(e) => setInputDate(e.target.value)}
-                  className="bg-[#FAF7F5] dark:bg-[#181514] border border-stone-200/80 dark:border-stone-700/80 rounded-xl px-3 py-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
+                  className="bg-[#FAF7F5] dark:bg-[#181514] border border-stone-200/80 dark:border-stone-700/80 rounded-xl px-3 py-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-none focus:border-rose-400"
                 />
                 <input
                   type="number"
@@ -677,13 +668,13 @@ export default function App() {
                   placeholder="Kilo (örn: 94.5)"
                   value={inputWeight}
                   onChange={(e) => setInputWeight(e.target.value)}
-                  className="bg-[#FAF7F5] dark:bg-[#181514] border border-stone-200/80 dark:border-stone-700/80 rounded-xl px-3 py-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
+                  className="bg-[#FAF7F5] dark:bg-[#181514] border border-stone-200/80 dark:border-stone-700/80 rounded-xl px-3 py-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-none focus:border-rose-400"
                 />
               </div>
               <button
                 type="submit"
                 disabled={savingWeight}
-                className="w-full bg-rose-500 hover:bg-rose-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-2xs shadow-rose-500/25 transition-all flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
+                className="w-full bg-rose-500 hover:bg-rose-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-sm shadow-rose-500/25 transition-all flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
               >
                 <Plus size={14} strokeWidth={2.5} />
                 <span>{savingWeight ? "Kaydediliyor..." : "Tartıyı Kaydet"}</span>
@@ -753,7 +744,7 @@ export default function App() {
 
         {/* 2. YASAKLAR */}
         {activeMeal === "forbidden" && (
-          <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
+          <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-sm transition-all duration-200 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800/80">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center shrink-0">
@@ -771,7 +762,7 @@ export default function App() {
             </div>
 
             <div className="space-y-4">
-              {(dietConfig.forbidden || DEFAULT_FORBIDDEN).map((group, gIdx) => {
+              {(dietConfig?.forbidden || DEFAULT_FORBIDDEN).map((group, gIdx) => {
                 const sortedItems = [...(group.items || [])].sort((a, b) => a.localeCompare(b, "tr"));
                 return (
                   <div key={gIdx} className="bg-[#FAF7F5]/70 dark:bg-[#1C1817]/60 border border-stone-200/60 dark:border-stone-800/70 rounded-2xl p-3.5 space-y-2.5">
@@ -786,7 +777,7 @@ export default function App() {
 
                     <div className="space-y-1.5">
                       {sortedItems.map((item, iIdx) => (
-                        <div key={iIdx} className="bg-white dark:bg-[#231F1E] border border-stone-200/70 dark:border-stone-800 px-3.5 py-2.5 rounded-xl text-xs text-stone-700 dark:text-stone-200 font-medium shadow-2xs flex items-center gap-2.5">
+                        <div key={iIdx} className="bg-white dark:bg-[#231F1E] border border-stone-200/70 dark:border-stone-800 px-3.5 py-2.5 rounded-xl text-xs text-stone-700 dark:text-stone-200 font-medium shadow-sm flex items-center gap-2.5">
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
                           <span className="leading-snug">{item}</span>
                         </div>
@@ -801,7 +792,7 @@ export default function App() {
 
         {/* 3. KURALLAR */}
         {activeMeal === "rules" && (
-          <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
+          <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-sm transition-all duration-200 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800/80">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center shrink-0">
@@ -819,9 +810,9 @@ export default function App() {
             </div>
 
             <div className="space-y-2.5">
-              {dietConfig.warnings.map((w, idx) => (
+              {dietConfig?.warnings?.map((w, idx) => (
                 <div key={idx} className="bg-[#FAF7F5]/70 dark:bg-[#1C1817]/60 border border-stone-100 dark:border-stone-800/80 rounded-2xl p-3.5 flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-xl bg-white dark:bg-[#231F1E] border border-rose-200/80 dark:border-rose-900/50 text-rose-500 dark:text-rose-400 text-[11px] font-bold flex items-center justify-center shrink-0 shadow-2xs">
+                  <span className="w-6 h-6 rounded-xl bg-white dark:bg-[#231F1E] border border-rose-200/80 dark:border-rose-900/50 text-rose-500 dark:text-rose-400 text-[11px] font-bold flex items-center justify-center shrink-0 shadow-sm">
                     {idx + 1}
                   </span>
                   <p className="text-xs text-stone-700 dark:text-stone-200 leading-relaxed font-normal pt-0.5">
@@ -835,7 +826,7 @@ export default function App() {
 
         {/* 4. ÖĞÜNLER */}
         {!["weight", "forbidden", "rules"].includes(activeMeal) && selectedMealData && (
-          <section className={`bg-white dark:bg-[#231F1E] rounded-3xl p-5 border transition-all duration-200 shadow-2xs ${
+          <section className={`bg-white dark:bg-[#231F1E] rounded-3xl p-5 border transition-all duration-200 shadow-sm ${
             isSelectedMealDone ? "border-rose-200 dark:border-rose-900/50 shadow-rose-950/5" : "border-stone-100 dark:border-stone-800/80"
           }`}>
             <div className="mb-3.5 space-y-2">
@@ -879,12 +870,12 @@ export default function App() {
                     onClick={() => handleSelect(selectedMealData.id, idx)}
                     className={`cursor-pointer text-xs p-3.5 rounded-2xl border transition-all duration-150 flex items-start gap-3 ${
                       isSelected
-                        ? "bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/50 text-rose-950 dark:text-rose-100 font-semibold shadow-2xs"
+                        ? "bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/50 text-rose-950 dark:text-rose-100 font-semibold shadow-sm"
                         : "bg-[#FAF7F5]/50 dark:bg-[#1C1817]/60 border-stone-100 dark:border-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-[#282220]"
                     }`}
                   >
                     <div className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 transition-all ${
-                      isSelected ? "border-rose-500 bg-rose-500 text-white shadow-2xs" : "border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800"
+                      isSelected ? "border-rose-500 bg-rose-500 text-white shadow-sm" : "border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800"
                     }`}>
                       {isSelected && <Check size={11} strokeWidth={3} />}
                     </div>
@@ -972,14 +963,14 @@ export default function App() {
             {/* Tam Daire Balmumu Mühür */}
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-500 via-rose-600 to-rose-800 shadow-md shadow-rose-950/50 border-2 border-rose-200/70 flex items-center justify-center ring-4 ring-[#FAF6F0] dark:ring-[#1E1816]">
-                <Heart size={20} className="fill-white text-rose-100 drop-shadow-xs" />
+                <Heart size={20} className="fill-white text-rose-100" />
               </div>
             </div>
 
             {/* Kapat Butonu */}
             <button
               onClick={() => setShowLetterModal(false)}
-              className="absolute top-3.5 right-3.5 w-7 h-7 bg-stone-200/60 dark:bg-stone-800/80 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors shadow-2xs z-30"
+              className="absolute top-3.5 right-3.5 w-7 h-7 bg-stone-200/60 dark:bg-stone-800/80 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors shadow-sm z-30"
               title="Kapat"
             >
               <X size={15} />
@@ -997,8 +988,8 @@ export default function App() {
               </span>
             </div>
 
-            {/* Genişletilmiş Okuma Alanı */}
-            <div className="relative bg-white/80 dark:bg-[#251F1D]/90 rounded-2xl p-4 sm:p-5 border border-rose-100/80 dark:border-stone-800/80 shadow-2xs">
+            {/* Geniş Okuma Alanı */}
+            <div className="relative bg-white/80 dark:bg-[#251F1D]/90 rounded-2xl p-4 sm:p-5 border border-rose-100/80 dark:border-stone-800/80 shadow-sm">
               <div className="max-h-[62vh] overflow-y-auto pr-1 letter-scroll">
                 <p className="text-[15px] sm:text-[16px] leading-[1.85] font-serif text-stone-800 dark:text-stone-100 whitespace-pre-line tracking-normal select-text">
                   {currentLoveNote}
