@@ -262,7 +262,7 @@ export default function App() {
     };
   }, [heartMode]);
 
-  // Kalbe Tıklandığında Canlı Güncel Notu Aç
+  // Kalbe Tıklandığında Güncel Notu Aç
   const handleHeartClick = async () => {
     try {
       const metaRef = doc(db, "logs", user.uid, "meta", "love_state");
@@ -549,7 +549,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Buton Grubu: Kilo + Yasaklar + Kurallar + Sağda Şık "Bugünün mesajını okudun" ve Kalp */}
+        {/* Buton Grubu: Kilo + Yasaklar + Kurallar + Sağda "Bugünün mesajını okudun" ve Kalp */}
         <div className="mt-3 flex items-center justify-start gap-1.5 w-full relative">
           <button
             onClick={() => setActiveMeal("weight")}
@@ -953,7 +953,7 @@ export default function App() {
         </div>
       )}
 
-      {/* YENİ MEKTUP MODALI: Üst Mühür Tam Görünür + Genişletilmiş ve Minimalist Okuma Alanı */}
+      {/* Mektup Modalı: Kesintisiz Mühür ve Genişletilmiş Okuma Alanı */}
       {showLetterModal && (
         <div 
           className="fixed inset-0 z-50 bg-stone-950/75 dark:bg-black/90 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-5 animate-in fade-in duration-200"
@@ -963,14 +963,13 @@ export default function App() {
             className="animate-letter-open relative max-w-lg w-full bg-[#FAF6F0] dark:bg-[#1E1816] rounded-3xl p-5 sm:p-6 pt-9 shadow-2xl border border-rose-200/80 dark:border-stone-800 transition-colors duration-200 text-left"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Arka Plan Romantik Filigran */}
             <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
               <div className="absolute -right-8 -bottom-8 opacity-[0.03] dark:opacity-[0.04]">
                 <Heart size={260} className="fill-rose-500" />
               </div>
             </div>
 
-            {/* Tam Daire Balmumu Mühür (Kesilme tamamen engellendi) */}
+            {/* Tam Daire Balmumu Mühür */}
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-500 via-rose-600 to-rose-800 shadow-md shadow-rose-950/50 border-2 border-rose-200/70 flex items-center justify-center ring-4 ring-[#FAF6F0] dark:ring-[#1E1816]">
                 <Heart size={20} className="fill-white text-rose-100 drop-shadow-xs" />
@@ -986,7 +985,7 @@ export default function App() {
               <X size={15} />
             </button>
 
-            {/* Minimalist Mektup Başlığı */}
+            {/* Başlık Satırı */}
             <div className="flex items-center justify-between border-b border-rose-200/50 dark:border-rose-900/40 pb-2 mb-3 pr-8">
               <span className="text-sm font-serif font-bold text-stone-800 dark:text-rose-100 flex items-center gap-1">
                 <span>Canım Eşime,</span>
@@ -998,14 +997,13 @@ export default function App() {
               </span>
             </div>
 
-            {/* GENİŞ VE FERAH METİN ALANI (Uzun Yazılar İçin 65vh Scroll) */}
+            {/* Genişletilmiş Okuma Alanı */}
             <div className="relative bg-white/80 dark:bg-[#251F1D]/90 rounded-2xl p-4 sm:p-5 border border-rose-100/80 dark:border-stone-800/80 shadow-2xs">
               <div className="max-h-[62vh] overflow-y-auto pr-1 letter-scroll">
                 <p className="text-[15px] sm:text-[16px] leading-[1.85] font-serif text-stone-800 dark:text-stone-100 whitespace-pre-line tracking-normal select-text">
                   {currentLoveNote}
                 </p>
                 
-                {/* İmza Satırı */}
                 <div className="mt-4 pt-2 border-t border-rose-100/60 dark:border-stone-800/60 text-right">
                   <span className="text-xs font-serif italic text-rose-500 dark:text-rose-400 font-medium">
                     — Daima kalbimdesin... ❤️
@@ -1014,7 +1012,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Sade ve İnce Kapatma Butonu */}
+            {/* Kapat Butonu */}
             <div className="mt-3.5 flex justify-center">
               <button
                 onClick={() => setShowLetterModal(false)}
