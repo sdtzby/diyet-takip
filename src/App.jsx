@@ -83,7 +83,6 @@ export default function App() {
   const [heartMode, setHeartMode] = useState("hidden");
   const [showLetterModal, setShowLetterModal] = useState(false);
   const [currentLoveNote, setCurrentLoveNote] = useState("");
-  const [hasSeenToday, setHasSeenToday] = useState(false);
 
   const heartRef = useRef(null);
   const animFrameRef = useRef(null);
@@ -263,7 +262,7 @@ export default function App() {
     };
   }, [heartMode]);
 
-  // Kalbe Dokunulduğunda Canlı Metni Getir
+  // Kalbe Tıklandığında Canlı Güncel Notu Aç
   const handleHeartClick = async () => {
     try {
       const metaRef = doc(db, "logs", user.uid, "meta", "love_state");
@@ -277,9 +276,7 @@ export default function App() {
       let targetIndex = typeof data.todayIndex === "number" ? data.todayIndex : 0;
 
       if (data.lastSeenDate === todayKey) {
-        // Eski dondurulmuş metin yerine güncel listedeki taze metni al
         noteToShow = notes[targetIndex] || notes[0];
-        setHasSeenToday(true);
       } else {
         let availableIndices = notes.map((_, idx) => idx).filter((idx) => !seenIndices.includes(idx));
         let nextIndex;
@@ -295,7 +292,6 @@ export default function App() {
 
         targetIndex = nextIndex;
         noteToShow = notes[nextIndex];
-        setHasSeenToday(false);
 
         await setDoc(metaRef, {
           lastSeenDate: todayKey,
@@ -461,7 +457,7 @@ export default function App() {
         @keyframes letterUnfold {
           0% { 
             opacity: 0; 
-            transform: translateY(22px) scale(0.95); 
+            transform: translateY(20px) scale(0.96); 
           }
           100% { 
             opacity: 1; 
@@ -553,7 +549,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Buton Grubu */}
+        {/* Buton Grubu: Kilo + Yasaklar + Kurallar + Sağda Şık "Bugünün mesajını okudun" ve Kalp */}
         <div className="mt-3 flex items-center justify-start gap-1.5 w-full relative">
           <button
             onClick={() => setActiveMeal("weight")}
@@ -591,15 +587,20 @@ export default function App() {
             <span>Kurallar</span>
           </button>
 
-          {/* Sabit Kalp Mührü */}
+          {/* Sağ Köşe: Okunduğunda Gelen İnce Metin ve Sabit Kalp */}
           {heartMode === "docked" && (
-            <button
-              onClick={handleHeartClick}
-              className="ml-auto w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md shadow-rose-500/30 active:scale-90 transition-transform animate-in fade-in zoom-in duration-300"
-              title="Günün Sevgi Notunu Yeniden Aç"
-            >
-              <Heart size={13} className="fill-white" />
-            </button>
+            <div className="ml-auto flex items-center gap-1.5 animate-in fade-in duration-300">
+              <span className="text-[10px] font-serif italic text-stone-400 dark:text-stone-500 select-none tracking-tight">
+                Bugünün mesajını okudun
+              </span>
+              <button
+                onClick={handleHeartClick}
+                className="w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md shadow-rose-500/30 active:scale-90 transition-transform shrink-0"
+                title="Günün Sevgi Notunu Yeniden Aç"
+              >
+                <Heart size={13} className="fill-white" />
+              </button>
+            </div>
           )}
         </div>
       </header>
@@ -952,44 +953,43 @@ export default function App() {
         </div>
       )}
 
-      {/* FERAH, GENİŞLETİLMİŞ & KESİNTİSİZ MÜHÜRLÜ MEKTUP MODALI */}
+      {/* YENİ MEKTUP MODALI: Üst Mühür Tam Görünür + Genişletilmiş ve Minimalist Okuma Alanı */}
       {showLetterModal && (
         <div 
           className="fixed inset-0 z-50 bg-stone-950/75 dark:bg-black/90 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-5 animate-in fade-in duration-200"
           onClick={() => setShowLetterModal(false)}
         >
-          {/* overflow-hidden KALDIRILDI: Bu sayede üstteki balmumu mühür asla kesilmez */}
           <div 
-            className="animate-letter-open relative max-w-lg w-full bg-[#FAF6F0] dark:bg-[#1E1816] rounded-3xl p-4 sm:p-6 pt-7 shadow-2xl border border-rose-200/80 dark:border-stone-800 transition-colors duration-200 text-left"
+            className="animate-letter-open relative max-w-lg w-full bg-[#FAF6F0] dark:bg-[#1E1816] rounded-3xl p-5 sm:p-6 pt-9 shadow-2xl border border-rose-200/80 dark:border-stone-800 transition-colors duration-200 text-left"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Arka Plan Filigranı: Kart sınırları içinde kalsın diye kendi içinde kırpıldı */}
+            {/* Arka Plan Romantik Filigran */}
             <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
-              <div className="absolute -right-10 -bottom-10 opacity-[0.035] dark:opacity-[0.045]">
+              <div className="absolute -right-8 -bottom-8 opacity-[0.03] dark:opacity-[0.04]">
                 <Heart size={260} className="fill-rose-500" />
               </div>
             </div>
 
-            {/* Üst Balmumu Mühür (Wax Seal) - Artık kesilmeden tam yuvarlak ve kabartmalı görünür */}
+            {/* Tam Daire Balmumu Mühür (Kesilme tamamen engellendi) */}
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-500 via-rose-600 to-rose-800 shadow-md shadow-rose-950/40 border-2 border-rose-200/60 flex items-center justify-center ring-4 ring-[#FAF6F0] dark:ring-[#1E1816]">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-500 via-rose-600 to-rose-800 shadow-md shadow-rose-950/50 border-2 border-rose-200/70 flex items-center justify-center ring-4 ring-[#FAF6F0] dark:ring-[#1E1816]">
                 <Heart size={20} className="fill-white text-rose-100 drop-shadow-xs" />
               </div>
             </div>
 
-            {/* Kapat Çarpısı */}
+            {/* Kapat Butonu */}
             <button
               onClick={() => setShowLetterModal(false)}
-              className="absolute top-3.5 right-3.5 w-7 h-7 bg-stone-100/90 dark:bg-stone-800/90 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors shadow-2xs z-30"
+              className="absolute top-3.5 right-3.5 w-7 h-7 bg-stone-200/60 dark:bg-stone-800/80 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors shadow-2xs z-30"
               title="Kapat"
             >
               <X size={15} />
             </button>
 
-            {/* Minimalist Üst Başlık Satırı */}
+            {/* Minimalist Mektup Başlığı */}
             <div className="flex items-center justify-between border-b border-rose-200/50 dark:border-rose-900/40 pb-2 mb-3 pr-8">
-              <span className="text-xs sm:text-sm font-serif font-bold text-stone-800 dark:text-rose-100 flex items-center gap-1">
-                <span>Boncuk gözlüm,</span>
+              <span className="text-sm font-serif font-bold text-stone-800 dark:text-rose-100 flex items-center gap-1">
+                <span>Canım Eşime,</span>
                 <span className="text-xs font-normal">🌸</span>
               </span>
 
@@ -998,23 +998,23 @@ export default function App() {
               </span>
             </div>
 
-            {/* GENİŞLETİLMİŞ & PARAGRAF DESTEKLİ OKUMA ALANI */}
+            {/* GENİŞ VE FERAH METİN ALANI (Uzun Yazılar İçin 65vh Scroll) */}
             <div className="relative bg-white/80 dark:bg-[#251F1D]/90 rounded-2xl p-4 sm:p-5 border border-rose-100/80 dark:border-stone-800/80 shadow-2xs">
-              <div className="max-h-[58vh] sm:max-h-[62vh] overflow-y-auto pr-1 letter-scroll">
-                <p className="text-[15px] sm:text-[16px] leading-[1.8] font-serif text-stone-800 dark:text-stone-100 whitespace-pre-line tracking-normal select-text">
+              <div className="max-h-[62vh] overflow-y-auto pr-1 letter-scroll">
+                <p className="text-[15px] sm:text-[16px] leading-[1.85] font-serif text-stone-800 dark:text-stone-100 whitespace-pre-line tracking-normal select-text">
                   {currentLoveNote}
                 </p>
                 
-                {/* Metin Altı İmza */}
-                <div className="mt-4 pt-2 border-t border-rose-100/50 dark:border-stone-800/60 text-right">
+                {/* İmza Satırı */}
+                <div className="mt-4 pt-2 border-t border-rose-100/60 dark:border-stone-800/60 text-right">
                   <span className="text-xs font-serif italic text-rose-500 dark:text-rose-400 font-medium">
-                    — evim sensin... ❤️
+                    — Daima kalbimdesin... ❤️
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Minimalist Kapat Butonu */}
+            {/* Sade ve İnce Kapatma Butonu */}
             <div className="mt-3.5 flex justify-center">
               <button
                 onClick={() => setShowLetterModal(false)}
