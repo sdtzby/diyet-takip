@@ -198,7 +198,7 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [user, isWife]);
 
-  // Çok Yavaş ve Yumuşak Seken Kalp Motoru
+  // Yavaş Süzülen Kalp Motoru
   useEffect(() => {
     if (heartMode !== "wandering") return;
 
@@ -451,13 +451,33 @@ export default function App() {
   return (
     <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden pb-28">
       
+      {/* Özel Mektup Açılış & Kaydırma Stilleri */}
       <style>{`
         @keyframes letterUnfold {
-          0% { opacity: 0; transform: translateY(32px) scale(0.92); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
+          0% { 
+            opacity: 0; 
+            transform: translateY(28px) scale(0.93); 
+          }
+          100% { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+          }
         }
         .animate-letter-open {
-          animation: letterUnfold 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: letterUnfold 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .letter-scroll::-webkit-scrollbar {
+          width: 4px;
+        }
+        .letter-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .letter-scroll::-webkit-scrollbar-thumb {
+          background: rgba(244, 63, 94, 0.25);
+          border-radius: 9999px;
+        }
+        .letter-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(244, 63, 94, 0.45);
         }
       `}</style>
 
@@ -569,7 +589,7 @@ export default function App() {
             <span>Kurallar</span>
           </button>
 
-          {/* Sabit Kalp Mührü: Kurallar Butonunun Karşısında Sağa Yaslı */}
+          {/* Sabit Kalp Mührü */}
           {heartMode === "docked" && (
             <button
               onClick={handleHeartClick}
@@ -930,68 +950,82 @@ export default function App() {
         </div>
       )}
 
-      {/* ZARİF MEKTUP MODALI */}
+      {/* YENİ NESİL KREATİF & GENİŞ AŞK MEKTUBU MODALI */}
       {showLetterModal && (
         <div 
-          className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-stone-950/70 dark:bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
           onClick={() => setShowLetterModal(false)}
         >
           <div 
-            className="animate-letter-open bg-[#FAF7F5] dark:bg-[#1E1917] rounded-3xl max-w-sm w-full p-6 pt-10 shadow-2xl border border-rose-200/80 dark:border-stone-800 relative text-center space-y-5"
+            className="animate-letter-open relative max-w-md w-full bg-[#FAF5EE] dark:bg-[#1E1816] rounded-[32px] p-6 sm:p-8 pt-10 shadow-2xl border-2 border-rose-200/90 dark:border-rose-900/50 text-left transition-colors duration-200 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Üst Mühür */}
-            <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-              <div className="w-16 h-16 rounded-2xl bg-white dark:bg-[#282220] p-1.5 shadow-lg shadow-rose-500/20 border-2 border-rose-200 dark:border-stone-700 flex items-center justify-center">
-                <img 
-                  src={`${import.meta.env.BASE_URL}images/love-letter.webp`} 
-                  alt="Mektup Mührü"
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
+            {/* Arka Planda Çok Hafif Romantik Filigran Kalp */}
+            <div className="absolute -right-8 -bottom-8 pointer-events-none opacity-[0.04] dark:opacity-[0.05]">
+              <Heart size={220} className="fill-rose-500" />
+            </div>
+
+            {/* Gerçekçi Balmumu Mühür (Wax Seal) */}
+            <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-20">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-rose-500 via-rose-700 to-red-800 shadow-lg shadow-rose-950/40 border-2 border-rose-300/40 flex items-center justify-center ring-4 ring-[#FAF5EE] dark:ring-[#1E1816]">
+                <Heart size={22} className="fill-rose-100 text-rose-200 drop-shadow-sm" />
               </div>
             </div>
 
             {/* Kapat Butonu */}
             <button
               onClick={() => setShowLetterModal(false)}
-              className="absolute top-3.5 right-3.5 w-7 h-7 bg-white dark:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors shadow-2xs"
+              className="absolute top-4 right-4 w-8 h-8 bg-white/80 dark:bg-stone-800/80 hover:bg-white dark:hover:bg-stone-700 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors shadow-2xs z-20"
+              title="Kapat"
             >
-              <X size={15} />
+              <X size={16} />
             </button>
 
-            {/* Başlık */}
-            <div className="pt-2 space-y-1">
-              {hasSeenToday ? (
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 px-3 py-1 rounded-full border border-rose-200/60 dark:border-rose-900/50 inline-block">
-                  Bugünün Notunu Gördün ✨
-                </span>
-              ) : (
-                <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500 dark:text-rose-400 block mb-1">
-                  Kalbimden Sana...
-                </span>
-              )}
-              <h3 className="text-base font-extrabold text-stone-800 dark:text-stone-100 tracking-tight pt-1">
-                Günün Sevgi Notu
+            {/* Üst Başlık & Nostaljik Posta Damgası */}
+            <div className="flex items-center justify-between border-b border-rose-200/60 dark:border-rose-900/40 pb-3 mb-4 pt-1">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-100/70 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-[10px] font-mono tracking-widest text-rose-600 dark:text-rose-400 uppercase font-semibold">
+                AŞK POSTASI ✉️
+              </span>
+
+              <span className="text-[11px] font-serif italic text-stone-400 dark:text-stone-500 pr-7">
+                {format(new Date(), "d MMMM yyyy", { locale: tr })}
+              </span>
+            </div>
+
+            {/* Mektup Hitap Başlığı */}
+            <div className="mb-3">
+              <h3 className="text-base sm:text-lg font-bold font-serif text-stone-800 dark:text-rose-100 tracking-tight flex items-center gap-1.5">
+                <span>Canım Eşime,</span>
+                <span className="text-sm not-italic">🌸</span>
               </h3>
             </div>
 
-            {/* Şık ve Ferah Not Sayfası */}
-            <div className="bg-white dark:bg-[#181514] border border-rose-100 dark:border-stone-800 rounded-2xl p-6 shadow-2xs min-h-[120px] flex items-center justify-center">
-              <p className="text-sm sm:text-base text-stone-800 dark:text-stone-100 leading-relaxed font-serif italic text-center px-1">
-                "{currentLoveNote}"
-              </p>
+            {/* GENİŞLETİLMİŞ VE ÖZEL KAYDIRILABİLİR MEKTUP METNİ ALANI */}
+            <div className="relative bg-white/75 dark:bg-[#251F1D]/80 backdrop-blur-xs border border-rose-100 dark:border-stone-800/80 rounded-2xl p-4 sm:p-5 shadow-inner">
+              <div className="max-h-[48vh] sm:max-h-[52vh] overflow-y-auto pr-2 letter-scroll">
+                <p className="text-[15px] sm:text-base leading-relaxed font-serif text-stone-800 dark:text-stone-100 whitespace-pre-line tracking-normal">
+                  {currentLoveNote}
+                </p>
+              </div>
+
+              {/* Mektup İçi Sağ Alt İmza */}
+              <div className="mt-4 pt-2.5 border-t border-rose-100/70 dark:border-stone-800/70 flex justify-end items-center">
+                <span className="text-xs sm:text-sm font-serif italic text-rose-500 dark:text-rose-400 font-medium">
+                  — Daima kalbimdesin... ❤️
+                </span>
+              </div>
             </div>
 
-            {/* Devam Et Butonu */}
-            <button
-              onClick={() => setShowLetterModal(false)}
-              className="w-full bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-2xl text-xs font-bold shadow-xs shadow-rose-500/25 transition-all active:scale-[0.98]"
-            >
-              Gülümse ve Devam Et 🌸
-            </button>
+            {/* Alt Eylem Butonu */}
+            <div className="mt-5">
+              <button
+                onClick={() => setShowLetterModal(false)}
+                className="w-full bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white py-3.5 rounded-2xl text-xs sm:text-sm font-bold shadow-md shadow-rose-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+              >
+                <span>Mektubu Katla ve Sakla</span>
+                <span>💌</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
