@@ -165,8 +165,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
 
   return (
     <div 
-      className="fixed inset-0 z-50 bg-stone-900/50 dark:bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
-      onClick={onClose}
+      <div className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
     >
       <div 
         className="bg-white dark:bg-[#1C1817] border border-stone-200 dark:border-stone-800 rounded-3xl w-full max-w-lg max-h-[88vh] flex flex-col shadow-2xl overflow-hidden transition-colors duration-300"
