@@ -62,6 +62,85 @@ const getCurrentMealByHour = () => {
   return "dinner";
 };
 
+// Bağlantıları Otomatik Algılayıp Tıklanabilir Buton/Link Yapan Fonksiyon
+const renderNoteWithLinks = (text) => {
+  if (!text) return null;
+
+  const regex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s]+)/g;
+  const elements = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      elements.push(text.slice(lastIndex, match.index));
+    }
+
+    if (match[1] && match[2]) {
+      // Markdown Biçimi: [Özel Başlık](https://...)
+      const label = match[1];
+      const url = match[2];
+      elements.push(
+        <a
+          key={match.index}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 font-bold text-rose-500 hover:text-rose-600 dark:text-rose-400 underline underline-offset-4 decoration-rose-300 dark:decoration-rose-700 mx-1 transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span>{label}</span>
+          <span className="text-[11px]">↗</span>
+        </a>
+      );
+    } else if (match[3]) {
+      // Düz URL Biçimi: https://...
+      let rawUrl = match[3];
+      let trailingPunctuation = "";
+      
+      const trailMatch = rawUrl.match(/[.,!?;:)\]]+$/);
+      if (trailMatch) {
+        trailingPunctuation = trailMatch[0];
+        rawUrl = rawUrl.slice(0, -trailMatch[0].length);
+      }
+
+      let badge = "Bağlantıyı Aç ↗";
+      if (rawUrl.includes("instagram.com")) {
+        badge = "Instagram'da Gör 📸";
+      } else if (rawUrl.includes("youtube.com") || rawUrl.includes("youtu.be")) {
+        badge = "Videoyu İzle ▶️";
+      } else if (rawUrl.includes("tiktok.com")) {
+        badge = "TikTok'ta İzle 🎵";
+      } else if (rawUrl.includes("twitter.com") || rawUrl.includes("x.com")) {
+        badge = "X'te Gör 💬";
+      }
+
+      elements.push(
+        <span key={match.index} className="inline-block my-1 mx-1 align-middle">
+          <a
+            href={rawUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-sans font-bold bg-rose-500/10 hover:bg-rose-500/20 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-300 border border-rose-300/70 dark:border-rose-800 transition-all active:scale-95 shadow-xs"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span>{badge}</span>
+          </a>
+          {trailingPunctuation}
+        </span>
+      );
+    }
+
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    elements.push(text.slice(lastIndex));
+  }
+
+  return elements;
+};
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -944,7 +1023,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Mektup Modalı: Kesintisiz Mühür ve Genişletilmiş Okuma Alanı */}
+      {/* Mektup Modalı: Bağlantı Tıklama Desteği + Kesintisiz Mühür */}
       {showLetterModal && (
         <div 
           className="fixed inset-0 z-50 bg-stone-950/75 dark:bg-black/90 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-5 animate-in fade-in duration-200"
@@ -988,12 +1067,12 @@ export default function App() {
               </span>
             </div>
 
-            {/* Geniş Okuma Alanı */}
+            {/* Geniş Okuma Alanı & Tıklanabilir Bağlantı Parser'ı */}
             <div className="relative bg-white/80 dark:bg-[#251F1D]/90 rounded-2xl p-4 sm:p-5 border border-rose-100/80 dark:border-stone-800/80 shadow-sm">
               <div className="max-h-[62vh] overflow-y-auto pr-1 letter-scroll">
-                <p className="text-[15px] sm:text-[16px] leading-[1.85] font-serif text-stone-800 dark:text-stone-100 whitespace-pre-line tracking-normal select-text">
-                  {currentLoveNote}
-                </p>
+                <div className="text-[15px] sm:text-[16px] leading-[1.85] font-serif text-stone-800 dark:text-stone-100 whitespace-pre-line tracking-normal select-text">
+                  {renderNoteWithLinks(currentLoveNote)}
+                </div>
                 
                 <div className="mt-4 pt-2 border-t border-rose-100/60 dark:border-stone-800/60 text-right">
                   <span className="text-xs font-serif italic text-rose-500 dark:text-rose-400 font-medium">
