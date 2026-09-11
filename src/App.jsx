@@ -198,7 +198,7 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [user, isWife]);
 
-  // Yavaş Süzülen Kalp Motoru
+  // Süzülen Kalp Hareketi
   useEffect(() => {
     if (heartMode !== "wandering") return;
 
@@ -263,6 +263,7 @@ export default function App() {
     };
   }, [heartMode]);
 
+  // Kalbe Dokunulduğunda Canlı Metni Getir
   const handleHeartClick = async () => {
     try {
       const metaRef = doc(db, "logs", user.uid, "meta", "love_state");
@@ -273,9 +274,11 @@ export default function App() {
       const seenIndices = Array.isArray(data.seenIndices) ? data.seenIndices : [];
 
       let noteToShow = "";
+      let targetIndex = typeof data.todayIndex === "number" ? data.todayIndex : 0;
 
-      if (data.lastSeenDate === todayKey && data.todayNote) {
-        noteToShow = data.todayNote;
+      if (data.lastSeenDate === todayKey) {
+        // Eski dondurulmuş metin yerine güncel listedeki taze metni al
+        noteToShow = notes[targetIndex] || notes[0];
         setHasSeenToday(true);
       } else {
         let availableIndices = notes.map((_, idx) => idx).filter((idx) => !seenIndices.includes(idx));
@@ -290,11 +293,13 @@ export default function App() {
           nextSeen = [...seenIndices, nextIndex];
         }
 
+        targetIndex = nextIndex;
         noteToShow = notes[nextIndex];
         setHasSeenToday(false);
 
         await setDoc(metaRef, {
           lastSeenDate: todayKey,
+          todayIndex: nextIndex,
           todayNote: noteToShow,
           seenIndices: nextSeen,
           updatedAt: new Date().toISOString(),
@@ -307,7 +312,8 @@ export default function App() {
 
     } catch (err) {
       console.error("Not yüklenemedi:", err);
-      setCurrentLoveNote("Seni çok seviyorum canım eşim! ❤️");
+      const notes = dietConfig.loveNotes?.length > 0 ? dietConfig.loveNotes : DEFAULT_LOVE_NOTES;
+      setCurrentLoveNote(notes[0] || "Seni çok seviyorum canım eşim! ❤️");
       setHeartMode("docked");
       setShowLetterModal(true);
     }
@@ -451,12 +457,11 @@ export default function App() {
   return (
     <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden pb-28">
       
-      {/* Özel Mektup Açılış & Kaydırma Stilleri */}
       <style>{`
         @keyframes letterUnfold {
           0% { 
             opacity: 0; 
-            transform: translateY(28px) scale(0.93); 
+            transform: translateY(22px) scale(0.95); 
           }
           100% { 
             opacity: 1; 
@@ -464,7 +469,7 @@ export default function App() {
           }
         }
         .animate-letter-open {
-          animation: letterUnfold 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: letterUnfold 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         .letter-scroll::-webkit-scrollbar {
           width: 4px;
@@ -473,11 +478,8 @@ export default function App() {
           background: transparent;
         }
         .letter-scroll::-webkit-scrollbar-thumb {
-          background: rgba(244, 63, 94, 0.25);
+          background: rgba(244, 63, 94, 0.3);
           border-radius: 9999px;
-        }
-        .letter-scroll::-webkit-scrollbar-thumb:hover {
-          background: rgba(244, 63, 94, 0.45);
         }
       `}</style>
 
@@ -551,7 +553,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Buton Grubu: Kilo + Yasaklar + Kurallar + (Görüldüğünde Sağdaki Kalp) */}
+        {/* Buton Grubu */}
         <div className="mt-3 flex items-center justify-start gap-1.5 w-full relative">
           <button
             onClick={() => setActiveMeal("weight")}
@@ -894,7 +896,7 @@ export default function App() {
         )}
       </main>
 
-      {/* SENİNLE BERABER KAYAN (EKRANDA AKAN) ALT MENÜ BARI */}
+      {/* Sayfayla Birlikte Kayan Alt Menü */}
       <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around z-40 transition-colors duration-300">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -929,7 +931,7 @@ export default function App() {
         })}
       </nav>
 
-      {/* SÜREKLİ YAVAŞÇA SÜZÜLEN KALP */}
+      {/* Süzülen Kalp */}
       {heartMode === "wandering" && (
         <div 
           ref={heartRef}
@@ -950,79 +952,75 @@ export default function App() {
         </div>
       )}
 
-      {/* YENİ NESİL KREATİF & GENİŞ AŞK MEKTUBU MODALI */}
+      {/* FERAH, GENİŞLETİLMİŞ & KESİNTİSİZ MÜHÜRLÜ MEKTUP MODALI */}
       {showLetterModal && (
         <div 
-          className="fixed inset-0 z-50 bg-stone-950/70 dark:bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-stone-950/75 dark:bg-black/90 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-5 animate-in fade-in duration-200"
           onClick={() => setShowLetterModal(false)}
         >
+          {/* overflow-hidden KALDIRILDI: Bu sayede üstteki balmumu mühür asla kesilmez */}
           <div 
-            className="animate-letter-open relative max-w-md w-full bg-[#FAF5EE] dark:bg-[#1E1816] rounded-[32px] p-6 sm:p-8 pt-10 shadow-2xl border-2 border-rose-200/90 dark:border-rose-900/50 text-left transition-colors duration-200 overflow-hidden"
+            className="animate-letter-open relative max-w-lg w-full bg-[#FAF6F0] dark:bg-[#1E1816] rounded-3xl p-4 sm:p-6 pt-7 shadow-2xl border border-rose-200/80 dark:border-stone-800 transition-colors duration-200 text-left"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Arka Planda Çok Hafif Romantik Filigran Kalp */}
-            <div className="absolute -right-8 -bottom-8 pointer-events-none opacity-[0.04] dark:opacity-[0.05]">
-              <Heart size={220} className="fill-rose-500" />
-            </div>
-
-            {/* Gerçekçi Balmumu Mühür (Wax Seal) */}
-            <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-20">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-rose-500 via-rose-700 to-red-800 shadow-lg shadow-rose-950/40 border-2 border-rose-300/40 flex items-center justify-center ring-4 ring-[#FAF5EE] dark:ring-[#1E1816]">
-                <Heart size={22} className="fill-rose-100 text-rose-200 drop-shadow-sm" />
+            {/* Arka Plan Filigranı: Kart sınırları içinde kalsın diye kendi içinde kırpıldı */}
+            <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
+              <div className="absolute -right-10 -bottom-10 opacity-[0.035] dark:opacity-[0.045]">
+                <Heart size={260} className="fill-rose-500" />
               </div>
             </div>
 
-            {/* Kapat Butonu */}
+            {/* Üst Balmumu Mühür (Wax Seal) - Artık kesilmeden tam yuvarlak ve kabartmalı görünür */}
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-500 via-rose-600 to-rose-800 shadow-md shadow-rose-950/40 border-2 border-rose-200/60 flex items-center justify-center ring-4 ring-[#FAF6F0] dark:ring-[#1E1816]">
+                <Heart size={20} className="fill-white text-rose-100 drop-shadow-xs" />
+              </div>
+            </div>
+
+            {/* Kapat Çarpısı */}
             <button
               onClick={() => setShowLetterModal(false)}
-              className="absolute top-4 right-4 w-8 h-8 bg-white/80 dark:bg-stone-800/80 hover:bg-white dark:hover:bg-stone-700 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors shadow-2xs z-20"
+              className="absolute top-3.5 right-3.5 w-7 h-7 bg-stone-100/90 dark:bg-stone-800/90 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full flex items-center justify-center transition-colors shadow-2xs z-30"
               title="Kapat"
             >
-              <X size={16} />
+              <X size={15} />
             </button>
 
-            {/* Üst Başlık & Nostaljik Posta Damgası */}
-            <div className="flex items-center justify-between border-b border-rose-200/60 dark:border-rose-900/40 pb-3 mb-4 pt-1">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-100/70 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-[10px] font-mono tracking-widest text-rose-600 dark:text-rose-400 uppercase font-semibold">
-                AŞK POSTASI ✉️
+            {/* Minimalist Üst Başlık Satırı */}
+            <div className="flex items-center justify-between border-b border-rose-200/50 dark:border-rose-900/40 pb-2 mb-3 pr-8">
+              <span className="text-xs sm:text-sm font-serif font-bold text-stone-800 dark:text-rose-100 flex items-center gap-1">
+                <span>Canım Eşime,</span>
+                <span className="text-xs font-normal">🌸</span>
               </span>
 
-              <span className="text-[11px] font-serif italic text-stone-400 dark:text-stone-500 pr-7">
+              <span className="text-[10px] sm:text-[11px] font-serif italic text-stone-400 dark:text-stone-500">
                 {format(new Date(), "d MMMM yyyy", { locale: tr })}
               </span>
             </div>
 
-            {/* Mektup Hitap Başlığı */}
-            <div className="mb-3">
-              <h3 className="text-base sm:text-lg font-bold font-serif text-stone-800 dark:text-rose-100 tracking-tight flex items-center gap-1.5">
-                <span>Canım Eşime,</span>
-                <span className="text-sm not-italic">🌸</span>
-              </h3>
-            </div>
-
-            {/* GENİŞLETİLMİŞ VE ÖZEL KAYDIRILABİLİR MEKTUP METNİ ALANI */}
-            <div className="relative bg-white/75 dark:bg-[#251F1D]/80 backdrop-blur-xs border border-rose-100 dark:border-stone-800/80 rounded-2xl p-4 sm:p-5 shadow-inner">
-              <div className="max-h-[48vh] sm:max-h-[52vh] overflow-y-auto pr-2 letter-scroll">
-                <p className="text-[15px] sm:text-base leading-relaxed font-serif text-stone-800 dark:text-stone-100 whitespace-pre-line tracking-normal">
+            {/* GENİŞLETİLMİŞ & PARAGRAF DESTEKLİ OKUMA ALANI */}
+            <div className="relative bg-white/80 dark:bg-[#251F1D]/90 rounded-2xl p-4 sm:p-5 border border-rose-100/80 dark:border-stone-800/80 shadow-2xs">
+              <div className="max-h-[58vh] sm:max-h-[62vh] overflow-y-auto pr-1 letter-scroll">
+                <p className="text-[15px] sm:text-[16px] leading-[1.8] font-serif text-stone-800 dark:text-stone-100 whitespace-pre-line tracking-normal select-text">
                   {currentLoveNote}
                 </p>
-              </div>
-
-              {/* Mektup İçi Sağ Alt İmza */}
-              <div className="mt-4 pt-2.5 border-t border-rose-100/70 dark:border-stone-800/70 flex justify-end items-center">
-                <span className="text-xs sm:text-sm font-serif italic text-rose-500 dark:text-rose-400 font-medium">
-                  — Daima kalbimdesin... ❤️
-                </span>
+                
+                {/* Metin Altı İmza */}
+                <div className="mt-4 pt-2 border-t border-rose-100/50 dark:border-stone-800/60 text-right">
+                  <span className="text-xs font-serif italic text-rose-500 dark:text-rose-400 font-medium">
+                    — Daima kalbimdesin... ❤️
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Alt Eylem Butonu */}
-            <div className="mt-5">
+            {/* Minimalist Kapat Butonu */}
+            <div className="mt-3.5 flex justify-center">
               <button
                 onClick={() => setShowLetterModal(false)}
-                className="w-full bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white py-3.5 rounded-2xl text-xs sm:text-sm font-bold shadow-md shadow-rose-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                className="w-full bg-rose-500 hover:bg-rose-600 text-white py-2.5 rounded-xl text-xs font-semibold shadow-xs shadow-rose-500/25 transition-all active:scale-[0.98] flex items-center justify-center gap-1.5"
               >
-                <span>Mektubu Katla ve Sakla</span>
+                <span>Mektubu Sakla</span>
                 <span>💌</span>
               </button>
             </div>
