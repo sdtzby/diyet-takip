@@ -187,7 +187,7 @@ export default function App() {
     return () => unsubscribe();
   }, [user]);
 
-  // 5 Saniye Sonra Kalbi Uçur
+  // Sayfa Açıldıktan 5 Saniye Sonra Kalbi Başlat
   useEffect(() => {
     if (!user || !isWife) return;
 
@@ -198,21 +198,24 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [user, isWife]);
 
-  // Yavaş Süzülen Kalp Animasyonu
+  // Çok Yavaş ve Yumuşak Seken Kalp Motoru
   useEffect(() => {
     if (heartMode !== "wandering") return;
 
     const heartSize = 52;
-    let x = Math.random() * (window.innerWidth - 100) + 20;
-    let y = Math.random() * (window.innerHeight - 260) + 80;
+    const screenW = window.innerWidth;
+    const screenH = window.innerHeight;
 
-    const speed = 25;
+    let x = Math.random() * (screenW - 100) + 20;
+    let y = Math.random() * (screenH - 260) + 80;
+
+    const speed = 20;
     const angle = Math.random() * 2 * Math.PI;
     let vx = Math.cos(angle) * speed;
     let vy = Math.sin(angle) * speed;
 
-    if (Math.abs(vx) < 12) vx = vx < 0 ? -16 : 16;
-    if (Math.abs(vy) < 12) vy = vy < 0 ? -16 : 16;
+    if (Math.abs(vx) < 10) vx = vx < 0 ? -12 : 12;
+    if (Math.abs(vy) < 10) vy = vy < 0 ? -12 : 12;
 
     let lastTime = performance.now();
 
@@ -220,10 +223,12 @@ export default function App() {
       const dt = Math.min((now - lastTime) / 1000, 0.1);
       lastTime = now;
 
+      const currentW = window.innerWidth;
+      const currentH = window.innerHeight;
       const minX = 12;
-      const maxX = window.innerWidth - heartSize - 12;
+      const maxX = currentW - heartSize - 12;
       const minY = 65;
-      const maxY = window.innerHeight - heartSize - 80;
+      const maxY = currentH - heartSize - 80;
 
       x += vx * dt;
       y += vy * dt;
@@ -444,7 +449,7 @@ export default function App() {
   const isSelectedMealDone = selectedMealData && selections[selectedMealData.id] !== undefined;
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden pb-12">
+    <div className="max-w-md mx-auto min-h-screen bg-[#FAF7F5] dark:bg-[#181514] font-sans text-stone-800 dark:text-stone-100 select-none transition-colors duration-300 relative overflow-x-hidden pb-28">
       
       <style>{`
         @keyframes letterUnfold {
@@ -577,10 +582,9 @@ export default function App() {
         </div>
       </header>
 
-      {/* Ana İçerik: Kart ve Alt Menü Arka Arkaya */}
-      <main className="px-5 pt-2 space-y-4">
-        
-        {/* 1. KİLO TAKİBİ KARTI */}
+      {/* Ana İçerik Kartı */}
+      <main className="px-5 pt-2">
+        {/* 1. KİLO TAKİBİ */}
         {activeMeal === "weight" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-2xs transition-all duration-200 space-y-4">
             <div className="flex justify-between items-start">
@@ -868,42 +872,42 @@ export default function App() {
             </div>
           </section>
         )}
-
-        {/* ALT MENÜ BARI: Kartın hemen altında, doğal sayfa akışında yer alır ve sayfa kaydıkça birlikte kayar */}
-        <nav className="w-full bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around transition-colors duration-300">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeMeal === item.id;
-            const isDone = selections[item.id] !== undefined;
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveMeal(item.id)}
-                className={`relative flex flex-col items-center justify-center py-2 px-4 rounded-2xl transition-all duration-200 active:scale-95 ${
-                  isActive 
-                    ? "bg-rose-500 text-white shadow-sm shadow-rose-500/30" 
-                    : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
-                }`}
-              >
-                <div className="relative">
-                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                  {isDone && (
-                    <span className={`absolute -top-1 -right-1.5 w-2 h-2 rounded-full ring-2 ${
-                      isActive ? "bg-emerald-300 ring-rose-500" : "bg-emerald-500 ring-white dark:ring-[#231F1E]"
-                    }`} />
-                  )}
-                </div>
-                <span className={`text-[11px] tracking-tight mt-1 font-semibold ${
-                  isActive ? "text-white" : "text-stone-500 dark:text-stone-400"
-                }`}>
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
-        </nav>
       </main>
+
+      {/* SENİNLE BERABER KAYAN (EKRANDA AKAN) ALT MENÜ BARI */}
+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/95 dark:bg-[#231F1E]/95 backdrop-blur-md border border-stone-100 dark:border-stone-800 shadow-xl shadow-stone-900/5 dark:shadow-black/30 rounded-3xl p-1.5 flex items-center justify-around z-40 transition-colors duration-300">
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeMeal === item.id;
+          const isDone = selections[item.id] !== undefined;
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveMeal(item.id)}
+              className={`relative flex flex-col items-center justify-center py-2 px-4 rounded-2xl transition-all duration-200 active:scale-95 ${
+                isActive 
+                  ? "bg-rose-500 text-white shadow-sm shadow-rose-500/30" 
+                  : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+              }`}
+            >
+              <div className="relative">
+                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                {isDone && (
+                  <span className={`absolute -top-1 -right-1.5 w-2 h-2 rounded-full ring-2 ${
+                    isActive ? "bg-emerald-300 ring-rose-500" : "bg-emerald-500 ring-white dark:ring-[#231F1E]"
+                  }`} />
+                )}
+              </div>
+              <span className={`text-[11px] tracking-tight mt-1 font-semibold ${
+                isActive ? "text-white" : "text-stone-500 dark:text-stone-400"
+              }`}>
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* SÜREKLİ YAVAŞÇA SÜZÜLEN KALP */}
       {heartMode === "wandering" && (
@@ -926,7 +930,7 @@ export default function App() {
         </div>
       )}
 
-      {/* MEKTUP MODALI */}
+      {/* ZARİF MEKTUP MODALI */}
       {showLetterModal && (
         <div 
           className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-5 animate-in fade-in duration-200"
