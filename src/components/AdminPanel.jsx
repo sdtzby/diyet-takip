@@ -3,9 +3,23 @@ import { db } from "../firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { X, Plus, Trash2, Save, Coffee, BookOpen, Ban, Heart } from "lucide-react";
 
+const DEFAULT_LOVE_NOTES = [
+  "Sen benim bu hayattaki en büyük şansımsın. Her adımında, her anında seninleyim. ❤️",
+  "Bugün kendine biraz daha şefkat göster canım eşim, harika gidiyorsun! 🌸",
+  "Gözlerinin içindeki o güzel gülümseme dünyalara bedel. İyi ki varsın. ✨",
+  "Seninle her şey daha kolay, daha neşeli ve çok daha güzel. Seni çok seviyorum. 💌",
+  "Azmine ve içindeki o güzel güce her gün bir kez daha hayran oluyorum. 🌟"
+];
+
 export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
   const [activeTab, setActiveTab] = useState("meals");
-  const [data, setData] = useState(JSON.parse(JSON.stringify(initialData)));
+  const [data, setData] = useState(() => {
+    const parsed = JSON.parse(JSON.stringify(initialData || {}));
+    if (!Array.isArray(parsed.forbidden)) {
+      parsed.forbidden = [];
+    }
+    return parsed;
+  });
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
 
@@ -51,22 +65,23 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
     setData(updated);
   };
 
-  const handleForbiddenItemChange = (groupIndex, itemIndex, value) => {
+  // Tek Liste Yasaklar Yönetimi
+  const handleForbiddenChange = (index, value) => {
     const updated = { ...data };
-    updated.forbidden[groupIndex].items[itemIndex] = value;
+    updated.forbidden[index] = value;
     setData(updated);
   };
 
-  const addForbiddenItem = (groupIndex) => {
+  const addForbiddenItem = () => {
     const updated = { ...data };
-    if (!updated.forbidden[groupIndex].items) updated.forbidden[groupIndex].items = [];
-    updated.forbidden[groupIndex].items.push("");
+    if (!Array.isArray(updated.forbidden)) updated.forbidden = [];
+    updated.forbidden.unshift("");
     setData(updated);
   };
 
-  const removeForbiddenItem = (groupIndex, itemIndex) => {
+  const removeForbiddenItem = (index) => {
     const updated = { ...data };
-    updated.forbidden[groupIndex].items.splice(itemIndex, 1);
+    updated.forbidden.splice(index, 1);
     setData(updated);
   };
 
@@ -94,9 +109,16 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
     setSaving(true);
     setSaveStatus("");
     try {
-      await setDoc(doc(db, "config", "diet_data"), data);
+      const cleanedData = {
+        ...data,
+        forbidden: (data.forbidden || [])
+          .map((item) => (typeof item === "string" ? item.trim() : ""))
+          .filter(Boolean)
+      };
+
+      await setDoc(doc(db, "config", "diet_data"), cleanedData);
       setSaveStatus("success");
-      onSaveSuccess(data);
+      onSaveSuccess(cleanedData);
       setTimeout(() => {
         onClose();
       }, 700);
@@ -109,6 +131,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
   };
 
   return (
+    // Boşluğa tıklanınca kapanmaması için onClick kaldırıldı
     <div className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 select-text">
       <div 
         className="relative max-w-2xl w-full bg-white dark:bg-[#231F1E] rounded-3xl shadow-2xl border border-stone-200/80 dark:border-stone-800 flex flex-col max-h-[90vh] overflow-hidden"
@@ -194,11 +217,9 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                   key={meal.id} 
                   className="bg-stone-50 dark:bg-[#1A1615] rounded-2xl p-4 border border-stone-200/60 dark:border-stone-800 space-y-3"
                 >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-rose-500 uppercase tracking-wider">
-                      {meal.title}
-                    </h3>
-                  </div>
+                  <h3 className="text-xs font-bold text-rose-500 uppercase tracking-wider">
+                    {meal.title}
+                  </h3>
 
                   <div>
                     <label className="block text-[11px] font-semibold text-stone-500 dark:text-stone-400 mb-1">
@@ -301,44 +322,48 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
             </div>
           )}
 
+          {/* Tek Liste Yasaklar */}
           {activeTab === "forbidden" && (
-            <div className="space-y-5">
-              {(data.forbidden || []).map((group, gIdx) => (
-                <div key={gIdx} className="bg-stone-50 dark:bg-[#1A1615] rounded-2xl p-4 border border-stone-200/60 dark:border-stone-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-rose-500">
-                      {group.category}
-                    </h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-stone-700 dark:text-stone-300">
+                    Yasaklı Besinler Listesi ({(data.forbidden || []).length})
+                  </span>
+                  <p className="text-[11px] text-stone-400">
+                    Tek liste halinde tutulur ve uygulamada alfabetik sıralanır.
+                  </p>
+                </div>
+                <button
+                  onClick={addForbiddenItem}
+                  className="text-xs font-bold text-rose-500 hover:text-rose-600 flex items-center gap-1 shrink-0"
+                >
+                  <Plus size={13} />
+                  <span>Yeni Ürün Ekle</span>
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {(data.forbidden || []).map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="w-6 text-center text-xs font-bold text-stone-400">{idx + 1}.</span>
+                    <input
+                      type="text"
+                      className="flex-1 bg-stone-50 dark:bg-[#1A1615] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
+                      value={item}
+                      onChange={(e) => handleForbiddenChange(idx, e.target.value)}
+                      placeholder="Yasaklı ürün adı..."
+                    />
                     <button
-                      onClick={() => addForbiddenItem(gIdx)}
-                      className="text-[10px] font-bold text-rose-500 hover:text-rose-600 flex items-center gap-0.5"
+                      onClick={() => removeForbiddenItem(idx)}
+                      className="p-2 text-stone-400 hover:text-rose-500 transition-colors"
+                      title="Sil"
                     >
-                      <Plus size={12} />
-                      <span>Ürün Ekle</span>
+                      <Trash2 size={14} />
                     </button>
                   </div>
-
-                  <div className="space-y-1.5">
-                    {(group.items || []).map((item, iIdx) => (
-                      <div key={iIdx} className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          className="flex-1 bg-white dark:bg-[#231F1E] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1.5 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
-                          value={item}
-                          onChange={(e) => handleForbiddenItemChange(gIdx, iIdx, e.target.value)}
-                        />
-                        <button
-                          onClick={() => removeForbiddenItem(gIdx, iIdx)}
-                          className="p-1.5 text-stone-400 hover:text-rose-500 transition-colors"
-                          title="Sil"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
 
@@ -350,7 +375,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                     Sevgi Notları Listesi ({(data.loveNotes || DEFAULT_LOVE_NOTES).length})
                   </span>
                   <p className="text-[11px] text-stone-400">
-                    İstediğin uzunlukta yazabilirsin; satır başları mektupta aynen korunur.
+                    İstediğin uzunlukta yazabilirsin; satır başları ve linkler otomatik işlenir.
                   </p>
                 </div>
 
