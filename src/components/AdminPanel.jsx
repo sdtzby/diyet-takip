@@ -75,7 +75,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
   const addForbiddenItem = () => {
     const updated = { ...data };
     if (!Array.isArray(updated.forbidden)) updated.forbidden = [];
-    updated.forbidden.unshift("");
+    updated.forbidden.unshift(""); // Yeni eklenen en üste gelir
     setData(updated);
   };
 
@@ -131,7 +131,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
   };
 
   return (
-    // Boşluğa tıklanınca kapanmaması için onClick kaldırıldı
+    // onClick={onClose} YOK - Sadece X butonuyla kapanır
     <div className="fixed inset-0 z-50 bg-stone-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 select-text">
       <div 
         className="relative max-w-2xl w-full bg-white dark:bg-[#231F1E] rounded-3xl shadow-2xl border border-stone-200/80 dark:border-stone-800 flex flex-col max-h-[90vh] overflow-hidden"
@@ -227,7 +227,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                     </label>
                     <input
                       type="text"
-                      className="w-full bg-white dark:bg-[#231F1E] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
+                      className="w-full bg-white dark:bg-[#231F1E] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-none focus:border-rose-400"
                       value={meal.title}
                       onChange={(e) => handleMealChange(mIdx, "title", e.target.value)}
                     />
@@ -239,7 +239,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                     </label>
                     <input
                       type="text"
-                      className="w-full bg-white dark:bg-[#231F1E] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
+                      className="w-full bg-white dark:bg-[#231F1E] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-none focus:border-rose-400"
                       value={meal.note || ""}
                       onChange={(e) => handleMealChange(mIdx, "note", e.target.value)}
                     />
@@ -264,7 +264,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                         <div key={oIdx} className="flex items-center gap-2">
                           <input
                             type="text"
-                            className="flex-1 bg-white dark:bg-[#231F1E] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1.5 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
+                            className="flex-1 bg-white dark:bg-[#231F1E] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-1.5 text-xs text-stone-800 dark:text-stone-100 focus:outline-none focus:border-rose-400"
                             value={opt}
                             onChange={(e) => handleOptionChange(mIdx, oIdx, e.target.value)}
                           />
@@ -305,7 +305,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                     <span className="w-5 text-center text-xs font-bold text-stone-400">{idx + 1}.</span>
                     <input
                       type="text"
-                      className="flex-1 bg-stone-50 dark:bg-[#1A1615] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
+                      className="flex-1 bg-stone-50 dark:bg-[#1A1615] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-none focus:border-rose-400"
                       value={w}
                       onChange={(e) => handleWarningChange(idx, e.target.value)}
                     />
@@ -349,7 +349,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                     <span className="w-6 text-center text-xs font-bold text-stone-400">{idx + 1}.</span>
                     <input
                       type="text"
-                      className="flex-1 bg-stone-50 dark:bg-[#1A1615] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-hidden focus:border-rose-400"
+                      className="flex-1 bg-stone-50 dark:bg-[#1A1615] border border-stone-200 dark:border-stone-700/80 rounded-xl px-3 py-2 text-xs text-stone-800 dark:text-stone-100 focus:outline-none focus:border-rose-400"
                       value={item}
                       onChange={(e) => handleForbiddenChange(idx, e.target.value)}
                       placeholder="Yasaklı ürün adı..."
@@ -394,7 +394,7 @@ export default function AdminPanel({ initialData, onClose, onSaveSuccess }) {
                     <span className="text-xs font-bold text-stone-400 pt-2">{idx + 1}.</span>
                     <textarea
                       rows={3}
-                      className="flex-1 bg-white dark:bg-[#231F1E] border border-stone-200 dark:border-stone-700/80 rounded-xl p-2.5 text-xs text-stone-800 dark:text-stone-100 leading-relaxed focus:outline-hidden focus:border-rose-400 resize-y font-serif"
+                      className="flex-1 bg-white dark:bg-[#231F1E] border border-stone-200 dark:border-stone-700/80 rounded-xl p-2.5 text-xs text-stone-800 dark:text-stone-100 leading-relaxed focus:outline-none focus:border-rose-400 resize-y font-serif"
                       value={note}
                       onChange={(e) => handleLoveNoteChange(idx, e.target.value)}
                       placeholder="Günün sevgi notunu yaz..."
