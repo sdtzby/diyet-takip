@@ -11,7 +11,7 @@ import { tr } from "date-fns/locale";
 import { 
   ChevronLeft, ChevronRight, Sparkles, LogOut, 
   Check, Settings, Camera, X, Sun, Moon, Coffee, BookOpen, Ban, Scale, 
-  TrendingDown, Plus, Trash2, Heart 
+  TrendingDown, Plus, Trash2, Heart, Search 
 } from "lucide-react";
 
 const START_WEIGHT = 102.0;
@@ -62,7 +62,6 @@ const getCurrentMealByHour = () => {
   return "dinner";
 };
 
-// Bağlantıları Otomatik Algılayıp Tıklanabilir Buton/Link Yapan Fonksiyon
 const renderNoteWithLinks = (text) => {
   if (!text) return null;
 
@@ -77,7 +76,6 @@ const renderNoteWithLinks = (text) => {
     }
 
     if (match[1] && match[2]) {
-      // Markdown Biçimi: [Özel Başlık](https://...)
       const label = match[1];
       const url = match[2];
       elements.push(
@@ -94,7 +92,6 @@ const renderNoteWithLinks = (text) => {
         </a>
       );
     } else if (match[3]) {
-      // Düz URL Biçimi: https://...
       let rawUrl = match[3];
       let trailingPunctuation = "";
       
@@ -157,6 +154,9 @@ export default function App() {
   const [inputWeight, setInputWeight] = useState("");
   const [inputDate, setInputDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [savingWeight, setSavingWeight] = useState(false);
+
+  // Yasaklar Arama Durumu
+  const [forbiddenSearch, setForbiddenSearch] = useState("");
 
   // Sürpriz Aşk Notu
   const [heartMode, setHeartMode] = useState("hidden");
@@ -265,7 +265,6 @@ export default function App() {
     return () => unsubscribe();
   }, [user]);
 
-  // Sayfa Açıldıktan 5 Saniye Sonra Kalbi Başlat
   useEffect(() => {
     if (!user || !isWife) return;
 
@@ -276,7 +275,6 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [user, isWife]);
 
-  // Süzülen Kalp Hareketi
   useEffect(() => {
     if (heartMode !== "wandering") return;
 
@@ -341,7 +339,6 @@ export default function App() {
     };
   }, [heartMode]);
 
-  // Kalbe Tıklandığında Güncel Notu Aç
   const handleHeartClick = async () => {
     try {
       const metaRef = doc(db, "logs", user.uid, "meta", "love_state");
@@ -453,6 +450,19 @@ export default function App() {
   const today = new Date();
   const diffTime = today.getTime() - SURGERY_DATE.getTime();
   const daysSinceSurgery = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+
+  // Tüm yasaklıları tek bir alfabetik listede topla
+  const rawForbiddenList = (dietConfig?.forbidden || DEFAULT_FORBIDDEN).flatMap(
+    (group) => group.items || []
+  );
+  const allForbiddenItems = Array.from(new Set(rawForbiddenList)).sort((a, b) =>
+    a.localeCompare(b, "tr")
+  );
+
+  // Arama filtresi
+  const filteredForbiddenItems = allForbiddenItems.filter((item) =>
+    item.toLocaleLowerCase("tr").includes(forbiddenSearch.trim().toLocaleLowerCase("tr"))
+  );
 
   if (loading) {
     return (
@@ -821,9 +831,10 @@ export default function App() {
           </section>
         )}
 
-        {/* 2. YASAKLAR */}
+        {/* 2. YASAKLAR (TEK BAŞLIK + ARAMA KUTUSU + ALFABETİK LİSTE) */}
         {activeMeal === "forbidden" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-sm transition-all duration-200 space-y-4">
+            {/* Tek Başlık */}
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800/80">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center shrink-0">
@@ -831,40 +842,64 @@ export default function App() {
                 </div>
                 <div>
                   <h2 className="font-extrabold text-stone-800 dark:text-stone-100 text-base tracking-tight">
-                    Uzak Durulacaklar
+                    Yasaklı Besinler
                   </h2>
                   <p className="text-[11px] text-stone-400 dark:text-stone-500 leading-tight mt-0.5">
-                    İyileşme ve kilo verme sürecini sekteye uğratan gıdalar
+                    İyileşme ve kilo verme sürecinde tüketilmemesi gereken gıdalar
                   </p>
                 </div>
               </div>
+              <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50">
+                {allForbiddenItems.length} ürün
+              </span>
             </div>
 
-            <div className="space-y-4">
-              {(dietConfig?.forbidden || DEFAULT_FORBIDDEN).map((group, gIdx) => {
-                const sortedItems = [...(group.items || [])].sort((a, b) => a.localeCompare(b, "tr"));
-                return (
-                  <div key={gIdx} className="bg-[#FAF7F5]/70 dark:bg-[#1C1817]/60 border border-stone-200/60 dark:border-stone-800/70 rounded-2xl p-3.5 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-rose-600 dark:text-rose-400 text-xs tracking-wide">
-                        {group.category}
-                      </h3>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400">
-                        {sortedItems.length} ürün
-                      </span>
-                    </div>
+            {/* Arama Kutusu */}
+            <div className="relative">
+              <Search
+                size={15}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none"
+              />
+              <input
+                type="text"
+                value={forbiddenSearch}
+                onChange={(e) => setForbiddenSearch(e.target.value)}
+                placeholder="Yasaklı ürün ara... (örn: ekmek, bal)"
+                className="w-full bg-[#FAF7F5] dark:bg-[#181514] border border-stone-200/80 dark:border-stone-700/80 rounded-2xl pl-10 pr-9 py-2.5 text-xs text-stone-800 dark:text-stone-100 focus:outline-none focus:border-rose-400 transition-colors"
+              />
+              {forbiddenSearch && (
+                <button
+                  onClick={() => setForbiddenSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"
+                  title="Temizle"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
 
-                    <div className="space-y-1.5">
-                      {sortedItems.map((item, iIdx) => (
-                        <div key={iIdx} className="bg-white dark:bg-[#231F1E] border border-stone-200/70 dark:border-stone-800 px-3.5 py-2.5 rounded-xl text-xs text-stone-700 dark:text-stone-200 font-medium shadow-sm flex items-center gap-2.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-                          <span className="leading-snug">{item}</span>
-                        </div>
-                      ))}
-                    </div>
+            {/* Alfabetik Liste / Bulunamadı Durumu */}
+            <div className="space-y-1.5 pt-1">
+              {filteredForbiddenItems.length > 0 ? (
+                filteredForbiddenItems.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-[#FAF7F5]/80 dark:bg-[#1C1817]/60 border border-stone-200/60 dark:border-stone-800/80 px-3.5 py-2.5 rounded-xl text-xs text-stone-700 dark:text-stone-200 font-medium shadow-2xs flex items-center gap-2.5"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                    <span className="leading-snug">{item}</span>
                   </div>
-                );
-              })}
+                ))
+              ) : (
+                <div className="py-8 text-center bg-[#FAF7F5]/50 dark:bg-[#1C1817]/40 rounded-2xl border border-dashed border-stone-200 dark:border-stone-800 space-y-1">
+                  <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    Ürün yasaklar listesinde yok
+                  </p>
+                  <p className="text-[10px] text-stone-400">
+                    "{forbiddenSearch}" aramasıyla eşleşen bir yasak bulunamadı.
+                  </p>
+                </div>
+              )}
             </div>
           </section>
         )}
@@ -1023,7 +1058,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Mektup Modalı: Bağlantı Tıklama Desteği + Kesintisiz Mühür */}
+      {/* Mektup Modalı */}
       {showLetterModal && (
         <div 
           className="fixed inset-0 z-50 bg-stone-950/75 dark:bg-black/90 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-5 animate-in fade-in duration-200"
@@ -1039,7 +1074,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Tam Daire Balmumu Mühür */}
+            {/* Balmumu Mühür */}
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-500 via-rose-600 to-rose-800 shadow-md shadow-rose-950/50 border-2 border-rose-200/70 flex items-center justify-center ring-4 ring-[#FAF6F0] dark:ring-[#1E1816]">
                 <Heart size={20} className="fill-white text-rose-100" />
@@ -1067,7 +1102,7 @@ export default function App() {
               </span>
             </div>
 
-            {/* Geniş Okuma Alanı & Tıklanabilir Bağlantı Parser'ı */}
+            {/* Geniş Okuma Alanı */}
             <div className="relative bg-white/80 dark:bg-[#251F1D]/90 rounded-2xl p-4 sm:p-5 border border-rose-100/80 dark:border-stone-800/80 shadow-sm">
               <div className="max-h-[62vh] overflow-y-auto pr-1 letter-scroll">
                 <div className="text-[15px] sm:text-[16px] leading-[1.85] font-serif text-stone-800 dark:text-stone-100 whitespace-pre-line tracking-normal select-text">
