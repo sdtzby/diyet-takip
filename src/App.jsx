@@ -458,10 +458,9 @@ export default function App() {
   const diffTime = today.getTime() - SURGERY_DATE.getTime();
   const daysSinceSurgery = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
 
-  // Firebase'deki veri formatı ne olursa olsun metinleri güvenle düz listeye çeker (çökmeyi engeller)
-  const rawForbidden = dietConfig?.forbidden || DEFAULT_FORBIDDEN;
-  const allForbiddenItems = (Array.isArray(rawForbidden) ? rawForbidden : [])
-    .flatMap((item) => (typeof item === "string" ? item : (item?.items || [])))
+  // Veritabanından gelen veriyi kontrol edip doğrudan filtreler
+  const rawForbidden = dietConfig?.forbidden;
+  const allForbiddenItems = (Array.isArray(rawForbidden) ? rawForbidden : DEFAULT_FORBIDDEN)
     .filter((item) => typeof item === "string" && item.trim().length > 0)
     .sort((a, b) => a.localeCompare(b, "tr"));
 
@@ -634,7 +633,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Buton Grubu */}
+        {/* Buton Grubu: Kilo + Yasaklar + Kurallar + Sağda "Bugünün mesajını okudun" ve Kalp */}
         <div className="mt-3 flex items-center justify-start gap-1.5 w-full relative">
           <button
             onClick={() => setActiveMeal("weight")}
@@ -672,7 +671,7 @@ export default function App() {
             <span>Kurallar</span>
           </button>
 
-          {/* Sağ Köşe Kalp */}
+          {/* Sağ Köşe: Okunduğunda Gelen İnce Metin ve Sabit Kalp */}
           {heartMode === "docked" && (
             <div className="ml-auto flex items-center gap-1.5 animate-in fade-in duration-300">
               <span className="text-[10px] font-serif italic text-stone-400 dark:text-stone-500 select-none tracking-tight">
