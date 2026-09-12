@@ -1096,7 +1096,7 @@ export default function App() {
             {/* Başlık Satırı */}
             <div className="flex items-center justify-between border-b border-rose-200/50 dark:border-rose-900/40 pb-2 mb-3 pr-8">
               <span className="text-sm font-serif font-bold text-stone-800 dark:text-rose-100 flex items-center gap-1">
-                <span>Canım Eşime,</span>
+                <span>Boncuk Gözlüm,</span>
                 <span className="text-xs font-normal">🌸</span>
               </span>
 
@@ -1114,7 +1114,7 @@ export default function App() {
                 
                 <div className="mt-4 pt-2 border-t border-rose-100/60 dark:border-stone-800/60 text-right">
                   <span className="text-xs font-serif italic text-rose-500 dark:text-rose-400 font-medium">
-                    — Daima kalbimdesin... ❤️
+                    — evim sensin... ❤️
                   </span>
                 </div>
               </div>
