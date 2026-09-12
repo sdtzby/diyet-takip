@@ -32,18 +32,25 @@ const NAV_ITEMS = [
 ];
 
 const DEFAULT_FORBIDDEN = [
-  {
-    category: "Hamur İşleri ve Unlu Gıdalar",
-    items: ["Beyaz Ekmek", "Lavaş", "Pide", "Börek", "Poğaça", "Simit", "Makarna"],
-  },
-  {
-    category: "Şeker İçeriği Yüksek Besinler",
-    items: ["Bal", "Reçel", "Pekmez", "Çikolata", "Gazlı ve Şekerli İçecekler", "Hazır Meyve Suyu"],
-  },
-  {
-    category: "Kızartmalar ve İşlenmiş Gıdalar",
-    items: ["Patates Kızartması", "Salam", "Sosis", "Sucuk", "Fast Food", "Cips"],
-  },
+  "Bal",
+  "Beyaz Ekmek",
+  "Börek",
+  "Cips",
+  "Çikolata",
+  "Fast Food",
+  "Gazlı ve Şekerli İçecekler",
+  "Hazır Meyve Suyu",
+  "Lavaş",
+  "Makarna",
+  "Patates Kızartması",
+  "Pekmez",
+  "Pide",
+  "Poğaça",
+  "Reçel",
+  "Salam",
+  "Simit",
+  "Sosis",
+  "Sucuk"
 ];
 
 const DEFAULT_LOVE_NOTES = [
@@ -451,15 +458,11 @@ export default function App() {
   const diffTime = today.getTime() - SURGERY_DATE.getTime();
   const daysSinceSurgery = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
 
-  // Tüm yasaklıları tek bir alfabetik listede topla
-  const rawForbiddenList = (dietConfig?.forbidden || DEFAULT_FORBIDDEN).flatMap(
-    (group) => group.items || []
-  );
-  const allForbiddenItems = Array.from(new Set(rawForbiddenList)).sort((a, b) =>
-    a.localeCompare(b, "tr")
-  );
+  // Saf tek liste: Sadece diziyi alıp alfabetik sırala
+  const allForbiddenItems = (dietConfig?.forbidden || DEFAULT_FORBIDDEN)
+    .slice()
+    .sort((a, b) => a.localeCompare(b, "tr"));
 
-  // Arama filtresi
   const filteredForbiddenItems = allForbiddenItems.filter((item) =>
     item.toLocaleLowerCase("tr").includes(forbiddenSearch.trim().toLocaleLowerCase("tr"))
   );
@@ -831,10 +834,9 @@ export default function App() {
           </section>
         )}
 
-        {/* 2. YASAKLAR (TEK BAŞLIK + ARAMA KUTUSU + ALFABETİK LİSTE) */}
+        {/* 2. YASAKLAR (SAF TEK LİSTE + ARAMA KUTUSU) */}
         {activeMeal === "forbidden" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-sm transition-all duration-200 space-y-4">
-            {/* Tek Başlık */}
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800/80">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 flex items-center justify-center shrink-0">
@@ -878,7 +880,7 @@ export default function App() {
               )}
             </div>
 
-            {/* Alfabetik Liste / Bulunamadı Durumu */}
+            {/* Alfabetik Düz Liste */}
             <div className="space-y-1.5 pt-1">
               {filteredForbiddenItems.length > 0 ? (
                 filteredForbiddenItems.map((item, idx) => (
