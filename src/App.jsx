@@ -458,9 +458,11 @@ export default function App() {
   const diffTime = today.getTime() - SURGERY_DATE.getTime();
   const daysSinceSurgery = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
 
-  // Saf tek liste: Sadece diziyi alıp alfabetik sırala
-  const allForbiddenItems = (dietConfig?.forbidden || DEFAULT_FORBIDDEN)
-    .slice()
+  // Firebase'deki veri formatı ne olursa olsun metinleri güvenle düz listeye çeker (çökmeyi engeller)
+  const rawForbidden = dietConfig?.forbidden || DEFAULT_FORBIDDEN;
+  const allForbiddenItems = (Array.isArray(rawForbidden) ? rawForbidden : [])
+    .flatMap((item) => (typeof item === "string" ? item : (item?.items || [])))
+    .filter((item) => typeof item === "string" && item.trim().length > 0)
     .sort((a, b) => a.localeCompare(b, "tr"));
 
   const filteredForbiddenItems = allForbiddenItems.filter((item) =>
@@ -632,7 +634,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Buton Grubu: Kilo + Yasaklar + Kurallar + Sağda "Bugünün mesajını okudun" ve Kalp */}
+        {/* Buton Grubu */}
         <div className="mt-3 flex items-center justify-start gap-1.5 w-full relative">
           <button
             onClick={() => setActiveMeal("weight")}
@@ -670,7 +672,7 @@ export default function App() {
             <span>Kurallar</span>
           </button>
 
-          {/* Sağ Köşe: Okunduğunda Gelen İnce Metin ve Sabit Kalp */}
+          {/* Sağ Köşe Kalp */}
           {heartMode === "docked" && (
             <div className="ml-auto flex items-center gap-1.5 animate-in fade-in duration-300">
               <span className="text-[10px] font-serif italic text-stone-400 dark:text-stone-500 select-none tracking-tight">
@@ -834,7 +836,7 @@ export default function App() {
           </section>
         )}
 
-        {/* 2. YASAKLAR (SAF TEK LİSTE + ARAMA KUTUSU) */}
+        {/* 2. YASAKLAR (TEK BAŞLIK + ARAMA + ALFABETİK DÜZ LİSTE) */}
         {activeMeal === "forbidden" && (
           <section className="bg-white dark:bg-[#231F1E] rounded-3xl p-5 border border-stone-100 dark:border-stone-800/80 shadow-sm transition-all duration-200 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800/80">
@@ -880,7 +882,7 @@ export default function App() {
               )}
             </div>
 
-            {/* Alfabetik Düz Liste */}
+            {/* Alfabetik Liste */}
             <div className="space-y-1.5 pt-1">
               {filteredForbiddenItems.length > 0 ? (
                 filteredForbiddenItems.map((item, idx) => (
